@@ -1,13 +1,16 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize}; 
+
+use crate::types::fournisseur::FournisseurId;
+
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct DosssierFournisseur {
-    pub id: DosssierFournisseurId,
+pub struct DossierFournisseur {
+    pub id: DossierFournisseurId,
     pub fournisseur_id: FournisseurId,
     pub designation: String,
 
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DosssierFournisseurId(pub String);
+pub struct DossierFournisseurId(pub String);
 

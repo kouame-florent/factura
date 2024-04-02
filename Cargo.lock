@@ -196,7 +196,10 @@ checksum = "8a0d04d43504c61aa6c7531f1871dd0d418d91130162063b789da00fd7057a5e"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
+ "serde",
+ "wasm-bindgen",
  "windows-targets 0.52.4",
 ]
 
@@ -381,6 +384,7 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 name = "factura"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "env_logger",
  "log",
  "log4rs",
