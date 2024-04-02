@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Fournisseur {
-    pub id: FournisseurId,
-    pub code: String,
-    pub sigle: String,
+pub struct DosssierFournisseur {
+    pub id: DosssierFournisseurId,
+    pub fournisseur_id: FournisseurId,
     pub designation: String,
 
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FournisseurId(pub String);
+pub struct DosssierFournisseurId(pub String);
+
