@@ -102,25 +102,50 @@ impl DossierFournisseurStore{
 
     }
 
-    //return all 'dossiers' of one 'fournisseur'
-    pub async fn get_all_dossiers(
+    
+    pub async fn update_dossier_fournisseur(
         &self,
-        fournisseur_id: String,
-    ) -> Result<Vec<DossierFournisseur>, Error>{
-        match sqlx::query("SELECT * from dossier_fournisseur WHERE fournisseur_id = $1")
-            .bind(fournisseur_id)
-            .map(|row: PgRow| DossierFournisseur {
-                id: DossierFournisseurId(row.get("id")),
-                fournisseur_id: FournisseurId(row.get("fournisseur_id")),
-                designation: row.get("designation"),
-            })
-            .fetch_all(&self.connection)
-            .await {
-                Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
-                Err(e) => {
-                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+        dossier_fournisseur: DossierFournisseur,
+        dossier_fournisseur_id: String,
+    )-> Result<DossierFournisseur, Error>{
+        match sqlx::query(
+            "UPDATE dossier_fournisseur SET designation = $1
+            WHERE id = $2
+            RETURNING id, fournisseur_id, designation",
+        ).bind(dossier_fournisseur.designation)
+        .bind(dossier_fournisseur_id)
+        .map(|row: PgRow| DossierFournisseur {
+            id: DossierFournisseurId(row.get("id")),
+            fournisseur_id: FournisseurId(row.get("fournisseur_id")),
+            designation: row.get("designation"),
+        })
+        .fetch_one(&self.connection)
+        .await
+        {
+            Ok(fournisseur) => Ok(fournisseur),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
             }
-        } 
+        }
     }
+
+    pub async fn delete_dossier_fournisseur(
+        &self,
+        dossier_fournisseur_id: String,
+    ) -> Result<bool, Error> {
+        match sqlx::query("DELETE FROM dossier_fournisseur WHERE id = $1")
+            .bind(dossier_fournisseur_id)
+            .execute(&self.connection)
+            .await
+        {
+            Ok(_) => Ok(true),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
+        }
+    }
+
+
 }

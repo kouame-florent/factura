@@ -80,6 +80,20 @@ pub async fn get_dossiers(
 }
 
 #[instrument]
+pub async fn get_dossier(
+    fournisseur_id: String,
+    dossier_id: String,
+    store: FournisseurStore,
+)-> Result<impl warp::Reply, warp::Rejection>{
+    event!(target: "factura", Level::INFO, "querying dossier fournisseur");
+    match store.get_dossier(dossier_id,fournisseur_id).await {
+        Ok(res) => Ok(warp::reply::json(&res)),
+        Err(e) => Err(warp::reject::custom(e)),
+    }
+
+}
+
+#[instrument]
 pub async fn delete_fournisseur(
     id: String,
     store: FournisseurStore,

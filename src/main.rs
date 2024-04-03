@@ -83,6 +83,12 @@ async fn main() {
         .and(fournisseur_store_filter.clone())
         .and_then(routes::fournisseur::get_dossiers);
 
+    let get_specific_dossier_by_fournisseur_id = warp::get()
+        .and(warp::path!("fournisseurs" / String / "dossiers" / String))
+        .and(warp::path::end())
+        .and(fournisseur_store_filter.clone())
+        .and_then(routes::fournisseur::get_dossier);
+
 
     let add_dossier_fournisseur = warp::post() 
         .and(warp::path("dossiers-fournisseurs"))
@@ -100,6 +106,7 @@ async fn main() {
         .or(delete_fournisseur)
         .or(get_dossiers_by_fournisseur_id)
         .or(add_dossier_fournisseur)
+        .or(get_specific_dossier_by_fournisseur_id)
         .with(warp::trace::request())
         .recover(return_error);
 

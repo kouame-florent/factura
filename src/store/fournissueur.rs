@@ -160,7 +160,8 @@ impl FournisseurStore{
         &self,
         id: String,
     )-> Result<Vec<DossierFournisseur>, Error>{
-        match sqlx::query("SELECT * from dossier_fournisseur WHERE fournisseur_id = $1")
+        match sqlx::query("SELECT * from dossier_fournisseur 
+                                WHERE fournisseur_id = $1")
             .bind(id)
             .map(|row: PgRow| DossierFournisseur {
                 id: DossierFournisseurId(row.get("id")),
@@ -178,6 +179,30 @@ impl FournisseurStore{
             
     }
 
-
+    pub async fn get_dossier(
+        &self,
+        dossier_id: String,
+        fournisseur_id: String,
+    )-> Result<Vec<DossierFournisseur>, Error>{
+        match sqlx::query(
+             "SELECT * from dossier_fournisseur 
+                  WHERE id = $1 and fournisseur_id = $2")
+            .bind(dossier_id)
+            .bind(fournisseur_id)
+            .map(|row: PgRow| DossierFournisseur {
+                id: DossierFournisseurId(row.get("id")),
+                fournisseur_id: FournisseurId(row.get("fournisseur_id")),
+                designation: row.get("designation"),
+            })
+            .fetch_all(&self.connection)
+            .await {
+                Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
+                Err(e) => {
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                    Err(Error::DatabaseQueryError)
+            }
+        } 
+            
+    }
 
 }

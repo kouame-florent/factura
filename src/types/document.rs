@@ -8,6 +8,7 @@ pub struct Document {
     pub id: DocumentId,
     pub code: String,
     pub libelle: String,
+    pub categorie: CategorieDocument,
     pub date_signature: u32,
     pub signataire: String,
     pub montant: i64,
@@ -22,4 +23,14 @@ pub struct Document {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DocumentId(pub String);
+
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum CategorieDocument{
+    FactureProformat,
+    FactureDefinitive,
+    BonDeLivraison,
+    BonDeCommande,
+
+}
 
