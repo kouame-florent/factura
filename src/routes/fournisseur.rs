@@ -4,17 +4,17 @@ use warp::http::StatusCode;
 use tracing::{event, instrument, Level};
 
 use crate::{
-    repo::fournisseur::FournisseurRepo, 
     types::{fournisseur::Fournisseur, pagination::{extract_pagination, Pagination}},
+    store::fournissueur::FournisseurStore,
     
 };
 
 #[instrument]
 pub async fn add_fournisseur(
-    repo: FournisseurRepo,
+    store: FournisseurStore,
     fournisseur: Fournisseur,
 ) -> Result<impl warp::Reply, warp::Rejection>{
-    match repo.add_fournisseur(fournisseur).await {
+    match store.add_fournisseur(fournisseur).await {
         Ok(_) => {
             Ok(warp::reply::with_status("Fournisseur added", StatusCode::OK))
         }
@@ -25,10 +25,10 @@ pub async fn add_fournisseur(
 #[instrument]
 pub async fn update_fournisseur(
     id: String,
-    repo: FournisseurRepo,
+    store: FournisseurStore,
     fournisseur: Fournisseur,
 ) -> Result<impl warp::Reply, warp::Rejection>{
-    match repo.update_fournisseur(fournisseur, id).await {
+    match store.update_fournisseur(fournisseur, id).await {
         Ok(res) => Ok(warp::reply::json(&res)),
         Err(e) => Err(warp::reject::custom(e))
     }
@@ -37,7 +37,7 @@ pub async fn update_fournisseur(
 #[instrument]
 pub async fn get_fournisseurs(
     params: HashMap<String, String>,
-    repo: FournisseurRepo,
+    store: FournisseurStore,
 ) -> Result<impl warp::Reply, warp::Rejection>{
     event!(target: "factura", Level::INFO, "querying fournisseur");
     let mut pagination = Pagination::default();
@@ -47,7 +47,7 @@ pub async fn get_fournisseurs(
         pagination = extract_pagination(params)?;
     }
 
-    match repo.get_fournisseurs(pagination.limit, pagination.offset).await {
+    match store.get_fournisseurs(pagination.limit, pagination.offset).await {
         Ok(res) => Ok(warp::reply::json(&res)),
         Err(e) => Err(warp::reject::custom(e)),
     }
@@ -56,24 +56,37 @@ pub async fn get_fournisseurs(
 #[instrument]
 pub async fn get_fournisseur(
     id: String,
-    repo: FournisseurRepo
+    store: FournisseurStore,
 ) -> Result<impl warp::Reply, warp::Rejection>{
     event!(target: "factura", Level::INFO, "querying fournisseur");
 
-    match repo.get_fournisseur(id).await {
+    match store.get_fournisseur(id).await {
         Ok(res) => Ok(warp::reply::json(&res)),
         Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
 #[instrument]
+pub async fn get_dossiers(
+    id: String,
+    store: FournisseurStore,
+)-> Result<impl warp::Reply, warp::Rejection>{
+    event!(target: "factura", Level::INFO, "querying dossier fournisseur");
+    match store.get_dossiers(id).await {
+        Ok(res) => Ok(warp::reply::json(&res)),
+        Err(e) => Err(warp::reject::custom(e)),
+    }
+
+}
+
+#[instrument]
 pub async fn delete_fournisseur(
     id: String,
-    repo: FournisseurRepo
+    store: FournisseurStore,
 ) -> Result<impl warp::Reply, warp::Rejection>{
     event!(target: "factura", Level::INFO, "querying fournisseur");
 
-    match repo.delete_fournisseur(id).await {
+    match store.delete_fournisseur(id).await {
         Ok(res) => Ok(warp::reply::json(&res)),
         Err(e) => Err(warp::reject::custom(e)),
     }

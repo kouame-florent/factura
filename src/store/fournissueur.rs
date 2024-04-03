@@ -1,32 +1,58 @@
-use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
+use sqlx::postgres::{PgPool, PgPoolOptions,PgRow};
 use sqlx::Row;
+
+use crate::error::Error;
+
 
 use crate::types::{
     fournisseur::Fournisseur,
     fournisseur::FournisseurId,
+    dossier_fournisseur::DossierFournisseur,
+    dossier_fournisseur::DossierFournisseurId,
     
 };
 
-use crate::error::Error;
-
 #[derive(Debug, Clone)]
-pub struct FournisseurRepo{
-    pub connection: PgPool,
+pub struct FournisseurStore{
+    connection: PgPool,
 }
-  
-impl FournisseurRepo{
-    pub async fn new(db_url: &str) -> Self {
 
-        let db_pool = match PgPoolOptions::new()
-            .max_connections(5)
-            .connect(db_url)
-            .await {
-                Ok(pool) => pool,
-                Err(e) => panic!("Couldn't establish DB connection: {}", e)
-            };
+impl FournisseurStore{
 
-        FournisseurRepo{
-            connection: db_pool,
+    pub async fn new(pool: PgPool) -> Self{
+        FournisseurStore{
+            connection: pool
+        }
+
+    }
+
+    pub async fn add_fournisseur(
+        &self,
+        new_fournisseur: Fournisseur,
+    ) -> Result<Fournisseur, Error> {
+        match sqlx::query(
+            "INSERT INTO fournisseur (id, code, sigle, designation)
+                 VALUES ($1, $2, $3, $4)
+                 RETURNING id, code, sigle, designation",
+        )
+        .bind(new_fournisseur.id.0) 
+        .bind(new_fournisseur.code)
+        .bind(new_fournisseur.sigle)
+        .bind(new_fournisseur.designation)  
+        .map(|row: PgRow| Fournisseur {
+            id: FournisseurId(row.get("id")),
+            code: row.get("code"),
+            sigle: row.get("sigle"),
+            designation: row.get("designation"),
+        })
+        .fetch_one(&self.connection)
+        .await
+        {
+            Ok(fournisseur) => Ok(fournisseur),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 
@@ -81,35 +107,6 @@ impl FournisseurRepo{
 
     }
 
-    pub async fn add_fournisseur(
-        &self,
-        new_fournisseur: Fournisseur,
-    ) -> Result<Fournisseur, Error> {
-        match sqlx::query(
-            "INSERT INTO fournisseur (id, code, sigle, designation)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING id, code, sigle, designation",
-        )
-        .bind(new_fournisseur.id.0) 
-        .bind(new_fournisseur.code)
-        .bind(new_fournisseur.sigle)
-        .bind(new_fournisseur.designation)  
-        .map(|row: PgRow| Fournisseur {
-            id: FournisseurId(row.get("id")),
-            code: row.get("code"),
-            sigle: row.get("sigle"),
-            designation: row.get("designation"),
-        })
-        .fetch_one(&self.connection)
-        .await
-        {
-            Ok(question) => Ok(question),
-            Err(e) => {
-                tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
-            }
-        }
-    }
 
     pub async fn update_fournisseur(
         &self,
@@ -157,5 +154,30 @@ impl FournisseurRepo{
             }
         }
     }
+
+
+    pub async fn get_dossiers(
+        &self,
+        id: String,
+    )-> Result<Vec<DossierFournisseur>, Error>{
+        match sqlx::query("SELECT * from dossier_fournisseur WHERE fournisseur_id = $1")
+            .bind(id)
+            .map(|row: PgRow| DossierFournisseur {
+                id: DossierFournisseurId(row.get("id")),
+                fournisseur_id: FournisseurId(row.get("fournisseur_id")),
+                designation: row.get("designation"),
+            })
+            .fetch_all(&self.connection)
+            .await {
+                Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
+                Err(e) => {
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                    Err(Error::DatabaseQueryError)
+            }
+        } 
+            
+    }
+
+
 
 }
