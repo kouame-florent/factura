@@ -6,6 +6,8 @@ pub struct Fournisseur {
     pub code: String,
     pub sigle: String,
     pub designation: String,
+    pub telephone: String,
+    pub email: String,
 
 }
 

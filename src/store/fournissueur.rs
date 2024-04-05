@@ -31,19 +31,23 @@ impl FournisseurStore{
         new_fournisseur: Fournisseur,
     ) -> Result<Fournisseur, Error> {
         match sqlx::query(
-            "INSERT INTO fournisseur (id, code, sigle, designation)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING id, code, sigle, designation",
+            "INSERT INTO fournisseur (id, code, sigle, designation, telephone, email)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING id, code, sigle, designation, telephone, email",
         )
         .bind(new_fournisseur.id.0) 
         .bind(new_fournisseur.code)
         .bind(new_fournisseur.sigle)
         .bind(new_fournisseur.designation)  
+        .bind(new_fournisseur.telephone)  
+        .bind(new_fournisseur.email)  
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
             code: row.get("code"),
             sigle: row.get("sigle"),
             designation: row.get("designation"),
+            telephone: row.get("telephone"),
+            email: row.get("email")
         })
         .fetch_one(&self.connection)
         .await
@@ -70,6 +74,8 @@ impl FournisseurStore{
                 code: row.get("code"),
                 sigle: row.get("sigle"),
                 designation: row.get("designation"),
+                telephone: row.get("telephone"),
+                email: row.get("email")
             })
             .fetch_all(&self.connection)
             .await {
@@ -94,6 +100,8 @@ impl FournisseurStore{
                 code: row.get("code"),
                 sigle: row.get("sigle"),
                 designation: row.get("designation"),
+                telephone: row.get("telephone"),
+                email: row.get("email")
             })
             .fetch_one(&self.connection)
             .await {
@@ -114,18 +122,26 @@ impl FournisseurStore{
         fournisseur_id: String,
     ) -> Result<Fournisseur, Error>{
         match sqlx::query(
-            "UPDATE fournisseur SET code = $1, sigle = $2, designation = $3
-            WHERE id = $4
-            RETURNING id, code, sigle, designation",
+            "UPDATE fournisseur SET code = $1, 
+            sigle = $2,
+            designation = $3,
+            telephone = $4,
+            email = $5
+            WHERE id = $6
+            RETURNING id, code, sigle, designation, telephone, email",
         ).bind(fournisseur.code)
         .bind(fournisseur.sigle)
         .bind(fournisseur.designation)
+        .bind(fournisseur.telephone)
+        .bind(fournisseur.email)
         .bind(fournisseur_id)
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
             code: row.get("code"),
             sigle: row.get("sigle"),
             designation: row.get("designation"),
+            telephone: row.get("telephone"),
+            email: row.get("email")
         })
         .fetch_one(&self.connection)
         .await
@@ -167,6 +183,8 @@ impl FournisseurStore{
                 id: DossierFournisseurId(row.get("id")),
                 fournisseur_id: FournisseurId(row.get("fournisseur_id")),
                 designation: row.get("designation"),
+                date_creation: row.get("designation"),
+                numero_courier: row.get("numero_courier"),
             })
             .fetch_all(&self.connection)
             .await {
@@ -193,6 +211,8 @@ impl FournisseurStore{
                 id: DossierFournisseurId(row.get("id")),
                 fournisseur_id: FournisseurId(row.get("fournisseur_id")),
                 designation: row.get("designation"),
+                date_creation: row.get("date_creation"),
+                numero_courier: row.get("numero_courier"),
             })
             .fetch_all(&self.connection)
             .await {

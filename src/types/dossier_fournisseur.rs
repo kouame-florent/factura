@@ -1,4 +1,6 @@
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize}; 
+
 
 use crate::types::fournisseur::FournisseurId;
 
@@ -8,6 +10,8 @@ pub struct DossierFournisseur {
     pub id: DossierFournisseurId,
     pub fournisseur_id: FournisseurId,
     pub designation: String,
+    pub date_creation: NaiveDateTime,
+    pub numero_courier: String,
 
 }
 
