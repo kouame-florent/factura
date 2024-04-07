@@ -9,13 +9,48 @@ mod routes;
 mod store;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), handle_errors::Error> {
 
-    let log_filter = std::env::var("RUST_LOG")
+    dotenv::dotenv().ok();
+
+    let log_filter = std::env::var("RUST_LOG") 
         .unwrap_or_else(|_| "error=warn,factura=info,warp=error".to_owned());
+
+    let app_port = std::env::var("APPLICATION_PORT")
+        .ok()
+        .map(|val| val.parse::<u16>())
+        .unwrap_or(Ok(8080))
+        .map_err(|e| handle_errors::Error::ParseError(e))?;
+
+
+    let db_port = std::env::var("DATABASE_PORT")
+        .ok()
+        .map(|val| val.parse::<u16>())
+        .unwrap_or(Ok(5432))
+        .map_err(|e| handle_errors::Error::ParseError(e))?;
+
+    let db_user =  std::env::var("DATABASE_USER")
+        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    let db_password =  std::env::var("DATABASE_PASSWORD")
+        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    let db_host =  std::env::var("DATABASE_HOST")
+        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    let db_name =  std::env::var("DATABASE_NAME")
+        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
         
 
-    let db_url = "postgres://factura:factura@localhost:5432/factura";
+    let db_url = &format!("postgres://{}:{}@{}:{}/{}",db_user,
+        db_password,
+        db_host,
+        db_port,
+        db_name
+    );
+        
+
+    //let db_url = "postgres://factura:factura@localhost:5432/factura";
     //let db_url;
     let conn = store::db_connection::DBConnection::new(db_url).await;
 
@@ -155,6 +190,8 @@ async fn main() {
         .with(warp::trace::request())
         .recover(return_error);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(routes).run(([127, 0, 0, 1], app_port)).await;
+
+    Ok(())
 
 }

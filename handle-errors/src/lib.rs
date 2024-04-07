@@ -11,6 +11,7 @@ pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
     DatabaseQueryError,
+    ValueNotSet(std::env::VarError),
 }
 
 impl std::fmt::Display for Error {
@@ -19,6 +20,7 @@ impl std::fmt::Display for Error {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
             Error::DatabaseQueryError => write!(f, "Cannot update, invalid data."),
+            Error::ValueNotSet(ref err) => write!(f, "Envirnement value not set: {}",err),
         }
     }
 }
