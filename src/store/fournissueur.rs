@@ -1,7 +1,7 @@
 use sqlx::postgres::{PgPool, PgPoolOptions,PgRow};
 use sqlx::Row;
 
-use crate::error::Error;
+use handle_errors::Error;
 
 
 use crate::types::{

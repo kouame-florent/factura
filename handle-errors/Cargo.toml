@@ -1,0 +1,11 @@
+[package]
+name = "handle-errors"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = "0.2"
+warp = "0.3"

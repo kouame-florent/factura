@@ -1,12 +1,11 @@
 
 use routes::fournisseur::get_dossiers;
 use warp::{http::Method, Filter};
-use error::return_error;
 use tracing_subscriber::fmt::format::FmtSpan;
+use handle_errors::return_error;
 
-mod types;
+mod types; 
 mod routes;
-mod error;
 mod store;
 
 #[tokio::main]
@@ -17,7 +16,14 @@ async fn main() {
         
 
     let db_url = "postgres://factura:factura@localhost:5432/factura";
+    //let db_url;
     let conn = store::db_connection::DBConnection::new(db_url).await;
+
+    sqlx::migrate!()
+        .run(&conn.pool.clone())
+        .await
+        .expect("Cannot run migration !");
+        
 
     let fournisseur_store = store::fournissueur::FournisseurStore::new(conn.pool.clone()).await;
     let dossier_fournisseur_store = store::dossier_fournisseur::DossierFournisseurStore::new(conn.pool.clone()).await;
@@ -30,6 +36,9 @@ async fn main() {
         // routes' durations!
         .with_span_events(FmtSpan::CLOSE)
         .init();
+
+    
+
 
     let fournisseur_store_filter = warp::any().map(move || fournisseur_store.clone() );
     let dossier_fournisseur_store_filter = warp::any().map(move || dossier_fournisseur_store.clone() );
@@ -121,7 +130,7 @@ async fn main() {
         .and(warp::query())
         .and(dossier_fournisseur_store_filter.clone())
         .and_then(routes::dossier_fournisseur::get_dossiers_fournisseurs);
-    
+
 
     let delete_dossier_fournisseur = warp::delete()
         .and(warp::path!("fournisseurs" / String))

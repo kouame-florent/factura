@@ -1,3 +1,4 @@
+workspace = { members = ["handle-errors"] }
 [package]
 name = "factura"
 version = "0.1.0"
@@ -18,3 +19,4 @@ tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = "0.2"
 regex = { version = "1", features = ["unicode-case"] }
 sqlx = { version = "0.7.4", features = [ "runtime-tokio-rustls", "migrate", "postgres", "chrono" ] }
+handle-errors = { path = "handle-errors" }

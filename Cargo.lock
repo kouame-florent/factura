@@ -386,6 +386,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "env_logger",
+ "handle-errors",
  "log",
  "log4rs",
  "regex",
@@ -553,6 +554,15 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "handle-errors"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
+ "warp",
 ]
 
 [[package]]
