@@ -10,7 +10,9 @@ use tracing::{event, Level, instrument};
 pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
-    DatabaseQueryError,
+    WrongPassword,
+    Unauthorized,
+    DatabaseQueryError(sqlx::Error),
     ValueNotSet(std::env::VarError),
 }
 
@@ -19,7 +21,9 @@ impl std::fmt::Display for Error {
         match &*self {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
-            Error::DatabaseQueryError => write!(f, "Cannot update, invalid data."),
+            Error::WrongPassword => write!(f, "Wrong password"),
+            Error::Unauthorized => write!(f, "No permission to change the underlying resource"),
+            Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data."),
             Error::ValueNotSet(ref err) => write!(f, "Envirnement value not set: {}",err),
         }
     }
@@ -27,13 +31,46 @@ impl std::fmt::Display for Error {
 
 impl Reject for Error {}
 
+//postgres 'duplicate key value violates unique constraint' code number
+const DUPLICATE_KEY: u32 = 23505;
+
 #[instrument]
 pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
-    if let Some(crate::Error::DatabaseQueryError) = r.find() {
+    if let Some(crate::Error::DatabaseQueryError(e)) = r.find() {
         event!(Level::ERROR, "Database query error");
+
+        match e {
+            sqlx::Error::Database(err) => {
+                if err.code().unwrap().parse::<u32>().unwrap() == DUPLICATE_KEY {
+                    Ok(warp::reply::with_status(
+                        "Account already exsists".to_string(),
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                    ))
+                } else {
+                    Ok(warp::reply::with_status(
+                        "Cannot update data".to_string(),
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                    ))
+                }
+            },
+            _ => { 
+                Ok(warp::reply::with_status(
+                    "Cannot update data".to_string(),
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                ))
+            }
+        }
+    } else if let Some(crate::Error::Unauthorized) = r.find() {
+        event!(Level::ERROR, "Not matching account id");
         Ok(warp::reply::with_status(
-            crate::Error::DatabaseQueryError.to_string(),
-            StatusCode::UNPROCESSABLE_ENTITY,
+            "No permission to change underlying resource".to_string(),
+            StatusCode::UNAUTHORIZED,
+        ))
+    } else if let Some(crate::Error::WrongPassword) = r.find() {
+        event!(Level::ERROR, "Entered wrong password");
+        Ok(warp::reply::with_status(
+            "Wrong E-Mail/Password combination".to_string(),
+            StatusCode::UNAUTHORIZED,
         ))
     } else if let Some(error) = r.find::<CorsForbidden>() {
         event!(Level::ERROR, "CORS forbidden error: {}", error);

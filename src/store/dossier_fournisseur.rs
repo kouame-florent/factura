@@ -53,7 +53,7 @@ impl DossierFournisseurStore{
             Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -78,7 +78,7 @@ impl DossierFournisseurStore{
                 Ok(questions) => Ok(questions),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
@@ -103,7 +103,7 @@ impl DossierFournisseurStore{
                 Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
@@ -137,7 +137,7 @@ impl DossierFournisseurStore{
             Ok(fournisseur) => Ok(fournisseur),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -154,7 +154,7 @@ impl DossierFournisseurStore{
             Ok(_) => Ok(true),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }

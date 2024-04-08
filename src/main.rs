@@ -8,12 +8,14 @@ mod types;
 mod routes;
 mod store;
 
+
+
 #[tokio::main]
 async fn main() -> Result<(), handle_errors::Error> {
 
     dotenv::dotenv().ok();
 
-    let log_filter = std::env::var("RUST_LOG") 
+    let log_filter = std::env::var("LOG_LEVEL") 
         .unwrap_or_else(|_| "error=warn,factura=info,warp=error".to_owned());
 
     let app_port = std::env::var("APPLICATION_PORT")
@@ -50,8 +52,6 @@ async fn main() -> Result<(), handle_errors::Error> {
     );
         
 
-    //let db_url = "postgres://factura:factura@localhost:5432/factura";
-    //let db_url;
     let conn = store::db_connection::DBConnection::new(db_url).await;
 
     sqlx::migrate!()
@@ -60,6 +60,7 @@ async fn main() -> Result<(), handle_errors::Error> {
         .expect("Cannot run migration !");
         
 
+    let auth_store = store::authentication::AuthStore::new(conn.pool.clone()).await;
     let fournisseur_store = store::fournissueur::FournisseurStore::new(conn.pool.clone()).await;
     let dossier_fournisseur_store = store::dossier_fournisseur::DossierFournisseurStore::new(conn.pool.clone()).await;
 
@@ -74,7 +75,7 @@ async fn main() -> Result<(), handle_errors::Error> {
 
     
 
-
+    let auth_store_filter = warp::any().map(move || auth_store.clone());
     let fournisseur_store_filter = warp::any().map(move || fournisseur_store.clone() );
     let dossier_fournisseur_store_filter = warp::any().map(move || dossier_fournisseur_store.clone() );
     // let log = warp::log::custom(|info| {
@@ -174,6 +175,14 @@ async fn main() -> Result<(), handle_errors::Error> {
         .and_then(routes::dossier_fournisseur::delete_fournisseur);
 
 
+    let registration = warp::post() 
+        .and(warp::path("registration"))
+        .and(warp::path::end())
+        .and(auth_store_filter)
+        .and(warp::body::json())
+        .and_then(routes::authentication::register);
+
+
 
     let routes = get_fournisseurs
         .or(update_fournisseur)
@@ -187,6 +196,7 @@ async fn main() -> Result<(), handle_errors::Error> {
         .or(get_dossiers_fournisseurs)
         .or(update_dossier_fournisseur)
         .or(delete_dossier_fournisseur)
+        .or(registration)
         .with(warp::trace::request())
         .recover(return_error);
 

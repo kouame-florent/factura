@@ -55,7 +55,7 @@ impl FournisseurStore{
             Ok(fournisseur) => Ok(fournisseur),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -82,7 +82,7 @@ impl FournisseurStore{
                 Ok(questions) => Ok(questions),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
@@ -108,7 +108,7 @@ impl FournisseurStore{
                 Ok(fournisseur) => Ok(fournisseur),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
@@ -149,7 +149,7 @@ impl FournisseurStore{
             Ok(fournisseur) => Ok(fournisseur),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -166,7 +166,7 @@ impl FournisseurStore{
             Ok(_) => Ok(true),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -191,7 +191,7 @@ impl FournisseurStore{
                 Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
@@ -219,7 +219,7 @@ impl FournisseurStore{
                 Ok(dossier_fournisseur) => Ok(dossier_fournisseur),
                 Err(e) => {
                     tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(Error::DatabaseQueryError)
+                    Err(Error::DatabaseQueryError(e))
             }
         } 
             
