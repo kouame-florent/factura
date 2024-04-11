@@ -5,12 +5,15 @@ use warp::{
     Rejection, Reply,
 };
 use tracing::{event, Level, instrument};
+use argon2::Error as ArgonError;
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
     WrongPassword,
+    CannotDecryptToken,
+    ArgonLibraryError(ArgonError),
     Unauthorized,
     DatabaseQueryError(sqlx::Error),
     ValueNotSet(std::env::VarError),
@@ -22,9 +25,11 @@ impl std::fmt::Display for Error {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
             Error::WrongPassword => write!(f, "Wrong password"),
+            Error::CannotDecryptToken => write!(f, "Cannot decrypt error"),
+            Error::ArgonLibraryError(_) => {write!(f, "Cannot verifiy password")}
             Error::Unauthorized => write!(f, "No permission to change the underlying resource"),
             Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data."),
-            Error::ValueNotSet(ref err) => write!(f, "Envirnement value not set: {}",err),
+            Error::ValueNotSet(ref err) => write!(f, "Environement value not set: {}",err),
         }
     }
 }
@@ -61,7 +66,7 @@ pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
             }
         }
     } else if let Some(crate::Error::Unauthorized) = r.find() {
-        event!(Level::ERROR, "Not matching account id");
+        event!(Level::ERROR, "Not matching role");
         Ok(warp::reply::with_status(
             "No permission to change underlying resource".to_string(),
             StatusCode::UNAUTHORIZED,

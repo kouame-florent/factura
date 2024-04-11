@@ -4,34 +4,61 @@ use warp::http::StatusCode;
 use tracing::{event, instrument, Level};
 
 use crate::{
-    types::{fournisseur::Fournisseur, pagination::{extract_pagination, Pagination}},
-    store::fournissueur::FournisseurStore,
+    store::fournissueur::FournisseurStore, types::{
+        account, fournisseur::Fournisseur, pagination::{extract_pagination, 
+        Pagination}
+    }
+    
     
 };
+use crate::types::account::{Session,Roles};
+use crate::store::authentication::AuthStore;
 
 #[instrument]
 pub async fn add_fournisseur(
+    session: Session,
     store: FournisseurStore,
+    auth_store: AuthStore,
     fournisseur: Fournisseur,
 ) -> Result<impl warp::Reply, warp::Rejection>{
-    match store.add_fournisseur(fournisseur).await {
-        Ok(_) => {
-            Ok(warp::reply::with_status("Fournisseur added", StatusCode::OK))
+
+    let account_id = session.account_id;
+    let admin: Roles = Roles::ADMIN;
+    if auth_store.has_authorization(account_id.0, admin.as_str().to_string()).await?{
+        match store.add_fournisseur(fournisseur).await {
+            Ok(_) => {
+                Ok(warp::reply::with_status("Fournisseur added", StatusCode::OK))
+            }
+            Err(e) => Err(warp::reject::custom(e)),
         }
-        Err(e) => Err(warp::reject::custom(e)),
+
+    }else {
+        Err(warp::reject::custom(handle_errors::Error::Unauthorized))
     }
+    
 }
 
 #[instrument]
 pub async fn update_fournisseur(
     id: String,
+    session: Session,
     store: FournisseurStore,
+    auth_store: AuthStore,
     fournisseur: Fournisseur,
 ) -> Result<impl warp::Reply, warp::Rejection>{
-    match store.update_fournisseur(fournisseur, id).await {
-        Ok(res) => Ok(warp::reply::json(&res)),
-        Err(e) => Err(warp::reject::custom(e))
+    let account_id = session.account_id;
+    let admin: Roles = Roles::ADMIN;
+    if auth_store.has_authorization(account_id.0, admin.as_str().to_string()).await?{
+          
+        match store.update_fournisseur(fournisseur, id).await {
+            Ok(res) => Ok(warp::reply::json(&res)),
+            Err(e) => Err(warp::reject::custom(e))
+        }
+    }else{
+        Err(warp::reject::custom(handle_errors::Error::Unauthorized))
     }
+
+  
 }
 
 #[instrument]

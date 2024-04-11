@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS fournisseur (
     designation VARCHAR (255) NOT NULL,
     telephone VARCHAR (255) NOT NULL,
     email VARCHAR (255) NOT NULL,
+    updated_by VARCHAR (255) NOT NULL,
     created_on TIMESTAMP NOT NULL DEFAULT NOW()
 ); 

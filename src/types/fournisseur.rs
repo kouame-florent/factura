@@ -8,6 +8,7 @@ pub struct Fournisseur {
     pub designation: String,
     pub telephone: String,
     pub email: String,
+    pub updated_by: String,
 
 }
 

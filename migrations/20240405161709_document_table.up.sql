@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS document (
     file_size BIGINT,
     mime_type VARCHAR (255),
     file_reference VARCHAR (255),
+    updated_by VARCHAR (255) NOT NULL,
     created_on TIMESTAMP NOT NULL DEFAULT NOW()
 );

@@ -31,9 +31,9 @@ impl FournisseurStore{
         new_fournisseur: Fournisseur,
     ) -> Result<Fournisseur, Error> {
         match sqlx::query(
-            "INSERT INTO fournisseur (id, code, sigle, designation, telephone, email)
-                 VALUES ($1, $2, $3, $4, $5, $6)
-                 RETURNING id, code, sigle, designation, telephone, email",
+            "INSERT INTO fournisseur (id, code, sigle, designation, telephone, email, updated_by)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 RETURNING id, code, sigle, designation, telephone, email, updated_by",
         )
         .bind(new_fournisseur.id.0) 
         .bind(new_fournisseur.code)
@@ -41,13 +41,15 @@ impl FournisseurStore{
         .bind(new_fournisseur.designation)  
         .bind(new_fournisseur.telephone)  
         .bind(new_fournisseur.email)  
+        .bind(new_fournisseur.updated_by) 
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
             code: row.get("code"),
             sigle: row.get("sigle"),
             designation: row.get("designation"),
             telephone: row.get("telephone"),
-            email: row.get("email")
+            email: row.get("email"),
+            updated_by: row.get("updated_by")
         })
         .fetch_one(&self.connection)
         .await
@@ -75,7 +77,8 @@ impl FournisseurStore{
                 sigle: row.get("sigle"),
                 designation: row.get("designation"),
                 telephone: row.get("telephone"),
-                email: row.get("email")
+                email: row.get("email"),
+                updated_by: row.get("updated_by")
             })
             .fetch_all(&self.connection)
             .await {
@@ -101,7 +104,8 @@ impl FournisseurStore{
                 sigle: row.get("sigle"),
                 designation: row.get("designation"),
                 telephone: row.get("telephone"),
-                email: row.get("email")
+                email: row.get("email"),
+                updated_by: row.get("updated_by")
             })
             .fetch_one(&self.connection)
             .await {
@@ -126,14 +130,16 @@ impl FournisseurStore{
             sigle = $2,
             designation = $3,
             telephone = $4,
-            email = $5
-            WHERE id = $6
-            RETURNING id, code, sigle, designation, telephone, email",
+            email = $5,
+            updated_by = $6
+            WHERE id = $7
+            RETURNING id, code, sigle, designation, telephone, email, updated_by",
         ).bind(fournisseur.code)
         .bind(fournisseur.sigle)
         .bind(fournisseur.designation)
         .bind(fournisseur.telephone)
         .bind(fournisseur.email)
+        .bind(fournisseur.updated_by)
         .bind(fournisseur_id)
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
@@ -141,7 +147,8 @@ impl FournisseurStore{
             sigle: row.get("sigle"),
             designation: row.get("designation"),
             telephone: row.get("telephone"),
-            email: row.get("email")
+            email: row.get("email"),
+            updated_by: row.get("updated_by")
         })
         .fetch_one(&self.connection)
         .await
@@ -224,5 +231,7 @@ impl FournisseurStore{
         } 
             
     }
+
+    
 
 }

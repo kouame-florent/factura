@@ -91,7 +91,9 @@ async fn main() -> Result<(), handle_errors::Error> {
     let add_fournisseur = warp::post() 
         .and(warp::path("fournisseurs"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::fournisseur::add_fournisseur);
 
@@ -105,9 +107,10 @@ async fn main() -> Result<(), handle_errors::Error> {
    
     let update_fournisseur = warp::put()
         .and(warp::path!("fournisseurs" / String))
-        //.and(warp::path::param::<i32>())
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::fournisseur::update_fournisseur);
 
@@ -178,10 +181,16 @@ async fn main() -> Result<(), handle_errors::Error> {
     let registration = warp::post() 
         .and(warp::path("registration"))
         .and(warp::path::end())
-        .and(auth_store_filter)
+        .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::authentication::register);
 
+    let login = warp::post()
+        .and(warp::path("login"))
+        .and(warp::path::end())
+        .and(auth_store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::authentication::login);
 
 
     let routes = get_fournisseurs
@@ -197,6 +206,7 @@ async fn main() -> Result<(), handle_errors::Error> {
         .or(update_dossier_fournisseur)
         .or(delete_dossier_fournisseur)
         .or(registration)
+        .or(login)
         .with(warp::trace::request())
         .recover(return_error);
 
