@@ -1,92 +1,33 @@
-
-use routes::fournisseur::get_dossiers;
-use warp::{http::Method, Filter};
+use warp::{http::Method, reply::Reply, Filter};
 use tracing_subscriber::fmt::format::FmtSpan;
-use handle_errors::return_error;
+use handle_errors;
+use tokio::sync::{oneshot, oneshot::Sender};
 
-mod types; 
+pub mod types; 
 mod routes;
 mod store;
+pub mod config;
 
+pub struct OneshotHandler {
+    pub sender: Sender<i32>,
+}
 
-
-#[tokio::main]
-async fn main() -> Result<(), handle_errors::Error> {
-
-    dotenv::dotenv().ok();
-
-    let log_filter = std::env::var("LOG_LEVEL") 
-        .unwrap_or_else(|_| "error=warn,factura=info,warp=error".to_owned());
-
-    let app_port = std::env::var("APPLICATION_PORT")
-        .ok()
-        .map(|val| val.parse::<u16>())
-        .unwrap_or(Ok(8080))
-        .map_err(|e| handle_errors::Error::ParseError(e))?;
-
-
-    let db_port = std::env::var("DATABASE_PORT")
-        .ok()
-        .map(|val| val.parse::<u16>())
-        .unwrap_or(Ok(5432))
-        .map_err(|e| handle_errors::Error::ParseError(e))?;
-
-    let db_user =  std::env::var("DATABASE_USER")
-        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    let db_password =  std::env::var("DATABASE_PASSWORD")
-        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    let db_host =  std::env::var("DATABASE_HOST")
-        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    let db_name =  std::env::var("DATABASE_NAME")
-        .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-        
-
-    let db_url = &format!("postgres://{}:{}@{}:{}/{}",db_user,
-        db_password,
-        db_host,
-        db_port,
-        db_name
-    );
-        
-
-    let conn = store::db_connection::DBConnection::new(db_url).await;
-
-    sqlx::migrate!()
-        .run(&conn.pool.clone())
-        .await
-        .expect("Cannot run migration !");
-        
+async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<Extract = impl Reply> + Clone{
 
     let auth_store = store::authentication::AuthStore::new(conn.pool.clone()).await;
     let fournisseur_store = store::fournissueur::FournisseurStore::new(conn.pool.clone()).await;
     let dossier_fournisseur_store = store::dossier_fournisseur::DossierFournisseurStore::new(conn.pool.clone()).await;
 
-    tracing_subscriber::fmt()
-        // Use the filter we built above to determine which traces to record.
-        .with_env_filter(log_filter)
-        // Record an event when each span closes.
-        // This can be used to time our
-        // routes' durations!
-        .with_span_events(FmtSpan::CLOSE)
-        .init();
-
-    
-
     let auth_store_filter = warp::any().map(move || auth_store.clone());
     let fournisseur_store_filter = warp::any().map(move || fournisseur_store.clone() );
     let dossier_fournisseur_store_filter = warp::any().map(move || dossier_fournisseur_store.clone() );
-    // let log = warp::log::custom(|info| {
-    //     eprintln!(
-    //         "{} {} {}",
-    //         info.method(),
-    //         info.path(),
-    //         info.status(),
-            
-    //     );
-    // });
+ 
+
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_header("content-type")
+        .allow_methods(&[Method::PUT, Method::DELETE, Method::GET, Method::POST]);
+
 
     let add_fournisseur = warp::post() 
         .and(warp::path("fournisseurs"))
@@ -114,7 +55,8 @@ async fn main() -> Result<(), handle_errors::Error> {
         .and(warp::body::json())
         .and_then(routes::fournisseur::update_fournisseur);
 
-    let get_fournisseur = warp::get()
+
+        let get_fournisseur = warp::get()
         .and(warp::path!("fournisseurs" / String))
         .and(warp::path::end())
         .and(fournisseur_store_filter.clone())
@@ -192,8 +134,7 @@ async fn main() -> Result<(), handle_errors::Error> {
         .and(warp::body::json())
         .and_then(routes::authentication::login);
 
-
-    let routes = get_fournisseurs
+    get_fournisseurs
         .or(update_fournisseur)
         .or(add_fournisseur)
         .or(get_fournisseur)
@@ -207,11 +148,104 @@ async fn main() -> Result<(), handle_errors::Error> {
         .or(delete_dossier_fournisseur)
         .or(registration)
         .or(login)
+        .with(cors)
         .with(warp::trace::request())
-        .recover(return_error);
+        .recover(handle_errors::return_error)
 
-    warp::serve(routes).run(([127, 0, 0, 1], app_port)).await;
+   // get_fournisseur
 
-    Ok(())
 
+}
+
+pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_connection::DBConnection, handle_errors::Error> {
+    // dotenv::dotenv().ok();
+
+    //  let log_filter = std::env::var("LOG_LEVEL") 
+    //      .unwrap_or_else(|_| "error=warn,factura=info,warp=error".to_owned());
+
+    // let db_port = std::env::var("DATABASE_PORT")
+    //     .ok()
+    //     .map(|val| val.parse::<u16>())
+    //     .unwrap_or(Ok(5432))
+    //     .map_err(|e| handle_errors::Error::ParseError(e))?;
+
+    // let db_user =  std::env::var("DATABASE_USER")
+    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    // let db_password =  std::env::var("DATABASE_PASSWORD")
+    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    // let db_host =  std::env::var("DATABASE_HOST")
+    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+
+    // let db_name =  std::env::var("DATABASE_NAME")
+    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
+        
+
+    let db_url = &format!("postgres://{}:{}@{}:{}/{}",
+        config.db_user,
+        config.db_password,
+        config.db_host,
+        config.db_port,
+        config.db_name
+    );
+        
+
+    let conn = store::db_connection::DBConnection::new(db_url).await;
+
+    sqlx::migrate!()
+        .run(&conn.pool.clone())
+        .await
+        .expect("Cannot run migration !");
+    
+    let log_filter = format!(
+            "handle_errors={},rust_web_dev={},warp={}",
+            config.log_level, config.log_level, config.log_level
+        );
+
+    tracing_subscriber::fmt()
+        // Use the filter we built above to determine which traces to record.
+        .with_env_filter(log_filter)
+        // Record an event when each span closes.
+        // This can be used to time our
+        // routes' durations!
+        .with_span_events(FmtSpan::CLOSE)
+        .init();
+
+    Ok(conn)
+
+
+}
+
+pub async fn run(config: &config::Config, conn: store::db_connection::DBConnection) {
+
+    // dotenv::dotenv().ok();
+
+    // let app_port = std::env::var("APPLICATION_PORT")
+    //     .ok()
+    //     .map(|val| val.parse::<u16>())
+    //     .unwrap_or(Ok(8080))
+    //     .map_err(|e| handle_errors::Error::ParseError(e));
+
+    let routes = build_routes(conn).await;
+    warp::serve(routes).run(([127, 0, 0, 1], config.app_port )).await;
+}
+
+
+pub async fn oneshot(conn: store::db_connection::DBConnection) -> OneshotHandler {
+    let routes = build_routes(conn).await;
+    let (tx, rx) = oneshot::channel::<i32>();
+
+    let socket: std::net::SocketAddr = "127.0.0.1:3030"
+        .to_string()
+        .parse()
+        .expect("Not a valid address");
+
+    let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(socket, async {
+        rx.await.ok();
+    });
+
+    tokio::task::spawn(server);
+
+    OneshotHandler { sender: tx }
 }

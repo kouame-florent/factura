@@ -119,12 +119,15 @@ fn issue_token(
 }
 
 #[instrument]
-pub fn auth(
-) -> impl Filter<Extract = (Session,), Error = warp::Rejection> + Clone {
+pub fn auth() -> impl Filter<Extract = (Session,), Error = warp::Rejection> + Clone {
     warp::header::<String>("Authorization").and_then(|token: String| {
         let token= match verify_token(token) {
             Ok(t) => t,
-            Err(_) => return future::ready(Err(warp::reject::reject())),
+            Err(_) => {
+                return future::ready(Err(warp::reject::custom(
+                    handle_errors::Error::Unauthorized,
+                )))
+            }
         };
 
         future::ready(Ok(token))
