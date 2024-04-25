@@ -7,6 +7,7 @@ use dtos::user::User;
 
 use handlers::fournisseur::{
     post_fournisseur,
+    post_fournisseur_without_suitable_role,
     put_fournisseur,
     get_fournisseur_by_id,
     get_fournisseurs,
@@ -15,9 +16,14 @@ use handlers::fournisseur::{
     delete_fournisseur,
 };
 
+use handlers::dossier_fournisseur::{ 
+    post_dossier_fournisseur,
+};
+
 use handlers::user::{
     login,
     register_new_user,
+    get_token_for,
 };
 
 mod dtos;
@@ -67,7 +73,7 @@ async fn main() -> Result<(), handle_errors::Error> {
     let conn = setup_db_connection(&config).await?;
 
     // start the server and listen for a sender signal to shut it down
-    let handler = oneshot(conn).await;
+    let handler = oneshot(&config,false, conn).await;
 
     let u = User {
         id: "aa-uu".to_string(),
@@ -101,8 +107,27 @@ async fn main() -> Result<(), handle_errors::Error> {
     }
 
 
+    
     print!("Running post_fournisseur...");
     match std::panic::AssertUnwindSafe(post_fournisseur(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+    let fu = User {
+        id: "aa-xx".to_string(),
+        email: "xx@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "CE".to_string(),
+    };
+
+    let w_token = get_token_for(fu).await.unwrap();
+
+    print!("Running post_fournisseur_without_suitable_role...");
+    match std::panic::AssertUnwindSafe(post_fournisseur_without_suitable_role(w_token)).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);
@@ -163,6 +188,19 @@ async fn main() -> Result<(), handle_errors::Error> {
             std::process::exit(1);
         }
     }
+
+    //test dossier fournisseur
+
+    print!("Running post_dossier_fournisseur...");
+    match std::panic::AssertUnwindSafe(post_dossier_fournisseur(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+
 
 
     let _ = handler.sender.send(1);

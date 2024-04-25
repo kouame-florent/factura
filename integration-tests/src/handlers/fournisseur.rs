@@ -1,4 +1,11 @@
-use crate::dtos::user::Token;
+use reqwest::Error;
+use serde_json::Value;
+
+use crate::dtos::dossier_fournisseur::PostDossierFournisseurRequest;
+use crate::dtos::user::{
+    Token,
+    User,
+};
 use crate::dtos::fournisseur::{
     PostFournisseurAnswer,
     PostFournisseurRequest,
@@ -8,9 +15,7 @@ use crate::dtos::fournisseur::{
 };
 
 
-
 pub async fn post_fournisseur(token: Token) {
-
 
     let f = PostFournisseurRequest {
         code: "f-01".to_string(),
@@ -35,6 +40,33 @@ pub async fn post_fournisseur(token: Token) {
 
     assert_eq!(res.email, "sgb@gmail.com");
     assert_eq!(res.sigle, f.sigle);
+}
+
+pub async fn post_fournisseur_without_suitable_role(token: Token) {
+
+    let f = PostFournisseurRequest {
+        code: "f-16".to_string(),
+        sigle: "SGB".to_string(),
+        designation: "societe de societé".to_string(),
+        telephone: "07-07-08-08-08".to_string(),
+        email: "sgb@gmail.com".to_string(),
+    
+    };
+
+    let client = reqwest::Client::new();
+    let res = client
+        .post("http://localhost:3030/fournisseurs")
+        .header("Authorization", token.0)
+        .json(&f)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    assert_eq!(res, "No permission to change underlying resource");
+
 }
 
 
@@ -323,7 +355,6 @@ pub async fn put_fournisseur(token: Token){
 
 pub async fn delete_fournisseur(token: Token){
     let f1 = PostFournisseurRequest {
-
         code: "f-09".to_string(),
         sigle: "SGB".to_string(),
         designation: "societe de societé".to_string(),
@@ -360,4 +391,29 @@ pub async fn delete_fournisseur(token: Token){
 
     assert_eq!(del_resp,true);
 
+}
+
+pub async fn get_fournisseur_dossiers(token: Token){
+    let f1 = PostFournisseurRequest {
+        code: "f-20".to_string(),
+        sigle: "SGB".to_string(),
+        designation: "societe de societé".to_string(),
+        telephone: "07-07-08-08-08".to_string(),
+        email: "sgb@gmail.com".to_string(),
+   
+    };
+
+    let client = reqwest::Client::new();
+    let post_res = client
+        .post("http://localhost:3030/fournisseurs")
+        .header("Authorization", token.0.clone())
+        .json(&f1)
+        .send()
+        .await
+        .unwrap()
+        .json::<PostFournisseurAnswer>()
+        .await
+        .unwrap();
+
+   
 }

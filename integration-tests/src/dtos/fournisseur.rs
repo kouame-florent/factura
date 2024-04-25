@@ -46,6 +46,7 @@ pub struct PutFournisseurRequest{
     pub designation: String,
     pub telephone: String,
     pub email: String,
+    
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
