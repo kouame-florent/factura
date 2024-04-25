@@ -18,6 +18,8 @@ use handlers::fournisseur::{
 
 use handlers::dossier_fournisseur::{ 
     post_dossier_fournisseur,
+    put_dossier_fournisseur,
+    get_dossier_fournisseur,
 };
 
 use handlers::user::{
@@ -73,7 +75,7 @@ async fn main() -> Result<(), handle_errors::Error> {
     let conn = setup_db_connection(&config).await?;
 
     // start the server and listen for a sender signal to shut it down
-    let handler = oneshot(&config,false, conn).await;
+    let handler = oneshot(&config,true, conn).await;
 
     let u = User {
         id: "aa-uu".to_string(),
@@ -200,6 +202,24 @@ async fn main() -> Result<(), handle_errors::Error> {
         }
     }
 
+    print!("Running put_dossier_fournisseur...");
+    match std::panic::AssertUnwindSafe(put_dossier_fournisseur(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+
+    print!("Running get_dossier_fournisseur...");
+    match std::panic::AssertUnwindSafe(get_dossier_fournisseur(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
 
 
