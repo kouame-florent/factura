@@ -5,3 +5,4 @@ pub mod document;
 pub mod operation;
 pub mod transmission;
 pub mod account;
+pub mod fichier;

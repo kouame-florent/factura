@@ -1,9 +1,11 @@
-use sqlx::postgres::{PgPool, PgPoolOptions,PgRow};
+use chrono::Utc; 
+use sqlx::postgres::{PgPool,PgRow};
 use sqlx::Row;
 
 use handle_errors::Error;
 
 
+use crate::types::fournisseur::{NewFournisseur, UpdatedFournisseur};
 use crate::types::{
     fournisseur::Fournisseur,
     fournisseur::FournisseurId,
@@ -28,20 +30,21 @@ impl FournisseurStore{
 
     pub async fn add_fournisseur(
         &self,
-        new_fournisseur: Fournisseur,
+        new_fournisseur: NewFournisseur,
+        updated_by: String,
     ) -> Result<Fournisseur, Error> {
         match sqlx::query(
             "INSERT INTO fournisseur (id, code, sigle, designation, telephone, email, updated_by)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
-                 RETURNING id, code, sigle, designation, telephone, email, updated_by",
+                 RETURNING id, code, sigle, designation, telephone, email, created_on, updated_on, updated_by",
         )
-        .bind(new_fournisseur.id.0) 
+        .bind(uuid::Uuid::new_v4().to_string()) 
         .bind(new_fournisseur.code)
         .bind(new_fournisseur.sigle)
         .bind(new_fournisseur.designation)  
         .bind(new_fournisseur.telephone)  
         .bind(new_fournisseur.email)  
-        .bind(new_fournisseur.updated_by) 
+        .bind(updated_by) 
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
             code: row.get("code"),
@@ -49,6 +52,8 @@ impl FournisseurStore{
             designation: row.get("designation"),
             telephone: row.get("telephone"),
             email: row.get("email"),
+            created_on: row.get("created_on"),
+            updated_on: row.get("updated_on"),
             updated_by: row.get("updated_by")
         })
         .fetch_one(&self.connection)
@@ -78,6 +83,8 @@ impl FournisseurStore{
                 designation: row.get("designation"),
                 telephone: row.get("telephone"),
                 email: row.get("email"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
                 updated_by: row.get("updated_by")
             })
             .fetch_all(&self.connection)
@@ -105,6 +112,8 @@ impl FournisseurStore{
                 designation: row.get("designation"),
                 telephone: row.get("telephone"),
                 email: row.get("email"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
                 updated_by: row.get("updated_by")
             })
             .fetch_one(&self.connection)
@@ -122,8 +131,9 @@ impl FournisseurStore{
 
     pub async fn update_fournisseur(
         &self,
-        fournisseur: Fournisseur,
+        updated_fournisseur: UpdatedFournisseur,
         fournisseur_id: String,
+        updated_by: String,
     ) -> Result<Fournisseur, Error>{
         match sqlx::query(
             "UPDATE fournisseur SET code = $1, 
@@ -131,15 +141,17 @@ impl FournisseurStore{
             designation = $3,
             telephone = $4,
             email = $5,
-            updated_by = $6
-            WHERE id = $7
-            RETURNING id, code, sigle, designation, telephone, email, updated_by",
-        ).bind(fournisseur.code)
-        .bind(fournisseur.sigle)
-        .bind(fournisseur.designation)
-        .bind(fournisseur.telephone)
-        .bind(fournisseur.email)
-        .bind(fournisseur.updated_by)
+            updated_on = $6,
+            updated_by = $7
+            WHERE id = $8
+            RETURNING id, code, sigle, designation, telephone, email, created_on, updated_on, updated_by",
+        ).bind(updated_fournisseur.code)
+        .bind(updated_fournisseur.sigle)
+        .bind(updated_fournisseur.designation)
+        .bind(updated_fournisseur.telephone)
+        .bind(updated_fournisseur.email)
+        .bind(Utc::now().naive_utc())
+        .bind(updated_by)
         .bind(fournisseur_id)
         .map(|row: PgRow| Fournisseur {
             id: FournisseurId(row.get("id")),
@@ -148,6 +160,8 @@ impl FournisseurStore{
             designation: row.get("designation"),
             telephone: row.get("telephone"),
             email: row.get("email"),
+            created_on: row.get("created_on"),
+            updated_on: row.get("updated_on"),
             updated_by: row.get("updated_by")
         })
         .fetch_one(&self.connection)
@@ -192,6 +206,9 @@ impl FournisseurStore{
                 designation: row.get("designation"),
                 date_creation: row.get("designation"),
                 numero_courier: row.get("numero_courier"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
+                updated_by: row.get("updated_by"),
             })
             .fetch_all(&self.connection)
             .await {
@@ -220,6 +237,9 @@ impl FournisseurStore{
                 designation: row.get("designation"),
                 date_creation: row.get("date_creation"),
                 numero_courier: row.get("numero_courier"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
+                updated_by: row.get("updated_by"),
             })
             .fetch_all(&self.connection)
             .await {

@@ -143,7 +143,7 @@ pub async fn put_dossier_fournisseur(token: Token) {
 }
 
 
-pub async fn get_dossier_fournisseur(token: Token){
+pub async fn get_dossier_fournisseur_by_id(token: Token){
 
     let f = PostFournisseurRequest {
         code: "d-02".to_string(),
@@ -205,5 +205,118 @@ pub async fn get_dossier_fournisseur(token: Token){
 
         assert_eq!(get_res.designation,"Livraison d'ordinateur");
         assert_eq!(get_res.numero_courier,"c-08-25-2024-18-23");
+
+}
+
+
+pub async fn list_dossiers_fournisseurs(token: Token){
+    let f = PostFournisseurRequest {
+        code: "d-02".to_string(),
+        sigle: "SGB".to_string(),
+        designation: "societe de societé".to_string(),
+        telephone: "07-07-08-08-08".to_string(),
+        email: "sgb@gmail.com".to_string(),
+    
+    };
+
+    let client = reqwest::Client::new();
+
+    let f_resp: PostFournisseurAnswer = client
+        .post("http://localhost:3030/fournisseurs")
+        .header("Authorization", token.0.clone())
+        .json(&f)
+        .send()
+        .await
+        .unwrap()
+        .json::<PostFournisseurAnswer>()
+        .await
+        .unwrap();
+
+
+    let d1 = PostDossierFournisseurRequest{
+            fournisseur_id: FournisseurId(f_resp.id.0.clone()),
+            designation: "Livraison d'ordinateur".to_string(),
+            date_creation: NaiveDate::from_ymd_opt(2024, 04, 01).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            numero_courier: "c-08-25-2024-18-23".to_string(),
+        
+        };
+
+    let d2 = PostDossierFournisseurRequest{
+            fournisseur_id: FournisseurId(f_resp.id.0.clone()),
+            designation: "Achat de véhicules".to_string(),
+            date_creation: NaiveDate::from_ymd_opt(2022, 07, 01).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            numero_courier: "cfao-2022-07".to_string(),
+            
+        };
+
+    let d3 = PostDossierFournisseurRequest{
+            fournisseur_id: FournisseurId(f_resp.id.0),
+            designation: "reparation de climatiseur".to_string(),
+            date_creation: NaiveDate::from_ymd_opt(2023, 10, 01).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            numero_courier: "artis-2023-07".to_string(),
+        
+        };
+    
+    let client = reqwest::Client::new();
+    
+    let _ = client
+            .post("http://localhost:3030/dossiers-fournisseurs")
+            .header("Authorization", token.0.clone())
+            .json(&d1)
+            .send()
+            .await
+            .unwrap()
+            .json::<PostDossierFournisseurAnswer>()
+            .await
+            .unwrap();
+
+    let _ = client
+            .post("http://localhost:3030/dossiers-fournisseurs")
+            .header("Authorization", token.0.clone())
+            .json(&d2)
+            .send()
+            .await
+            .unwrap()
+            .json::<PostDossierFournisseurAnswer>()
+            .await
+            .unwrap();
+
+    let _ = client
+            .post("http://localhost:3030/dossiers-fournisseurs")
+            .header("Authorization", token.0.clone())
+            .json(&d3)
+            .send()
+            .await
+            .unwrap()
+            .json::<PostDossierFournisseurAnswer>()
+            .await
+            .unwrap();
+
+
+
+    let res = client
+            .get("http://localhost:3030/dossiers-fournisseurs?limit=2&offset=0")
+            .header("Authorization", token.0.clone())
+            .send()
+            .await
+            .unwrap()
+            .json::<Vec<GetDossierFournisseurAnswer>>()
+            .await
+            .unwrap();
+    
+    assert_eq!(res.len(),2);
+    
+    let res = client
+            .get("http://localhost:3030/dossiers-fournisseurs")
+            .header("Authorization", token.0.clone())
+            .send()
+            .await
+            .unwrap()
+            .json::<Vec<GetDossierFournisseurAnswer>>()
+            .await
+            .unwrap();
+    
+    assert_eq!(res.len(),6);
+
 
 }

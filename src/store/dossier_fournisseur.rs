@@ -1,11 +1,12 @@
-use sqlx::postgres::{PgPool, PgPoolOptions,PgRow};
+use chrono::Utc;
+use sqlx::postgres::{PgPool,PgRow};
 use sqlx::Row;
 
 use handle_errors::Error;
 
 
+use crate::types::dossier_fournisseur::{NewDossierFournisseur, UpdatedDossierFournisseur};
 use crate::types::{
-    fournisseur::Fournisseur,
     fournisseur::FournisseurId,
     dossier_fournisseur::DossierFournisseur,
     dossier_fournisseur::DossierFournisseurId,
@@ -28,24 +29,29 @@ impl DossierFournisseurStore{
 
     pub async fn add_dossier_fournisseur(
         &self,
-        new_dossier_fournisseur: DossierFournisseur,
+        new_dossier_fournisseur: NewDossierFournisseur,
+        updated_by: String,
     ) -> Result<DossierFournisseur, Error>{
         match sqlx::query(
-            "INSERT INTO dossier_fournisseur (id, fournisseur_id, designation, date_creation, numero_courier)
-                 VALUES ($1, $2, $3, $4, $5)
-                 RETURNING id, fournisseur_id, designation, date_creation, numero_courier",
+            "INSERT INTO dossier_fournisseur (id, fournisseur_id, designation, date_creation, numero_courier, updated_by)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING id, fournisseur_id, designation, date_creation, numero_courier, created_on, updated_on, updated_by",
         )
-        .bind(new_dossier_fournisseur.id.0) 
+        .bind(uuid::Uuid::new_v4().to_string()) 
         .bind(new_dossier_fournisseur.fournisseur_id.0) 
         .bind(new_dossier_fournisseur.designation)
         .bind(new_dossier_fournisseur.date_creation)
         .bind(new_dossier_fournisseur.numero_courier)
+        .bind(updated_by)
         .map(|row: PgRow| DossierFournisseur {
             id: DossierFournisseurId(row.get("id")),
             fournisseur_id: FournisseurId(row.get("fournisseur_id")),
             designation: row.get("designation"),
             date_creation: row.get("date_creation"),
             numero_courier: row.get("numero_courier"),
+            created_on: row.get("created_on"),
+            updated_on: row.get("updated_on"),
+            updated_by: row.get("updated_by"),
         })
         .fetch_one(&self.connection)
         .await
@@ -72,6 +78,9 @@ impl DossierFournisseurStore{
                 designation: row.get("designation"),
                 date_creation: row.get("date_creation"),
                 numero_courier: row.get("numero_courier"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
+                updated_by: row.get("updated_by"),
             })
             .fetch_all(&self.connection)
             .await {
@@ -97,6 +106,9 @@ impl DossierFournisseurStore{
                 designation: row.get("designation"),
                 date_creation: row.get("date_creation"),
                 numero_courier: row.get("numero_courier"),
+                created_on: row.get("created_on"),
+                updated_on: row.get("updated_on"),
+                updated_by: row.get("updated_by"),
             })
             .fetch_one(&self.connection)
             .await {
@@ -113,23 +125,35 @@ impl DossierFournisseurStore{
     
     pub async fn update_dossier_fournisseur(
         &self,
-        dossier_fournisseur: DossierFournisseur,
+        dossier_fournisseur: UpdatedDossierFournisseur,
         dossier_fournisseur_id: String,
+        updated_by: String,
     )-> Result<DossierFournisseur, Error>{
         match sqlx::query(
-            "UPDATE dossier_fournisseur SET designation = $1, numero_courier = $2
-            WHERE id = $3
-            RETURNING id, fournisseur_id, designation, date_creation, numero_courier",
+            "UPDATE dossier_fournisseur SET 
+            designation = $1,
+            date_creation = $2,
+            numero_courier = $3,
+            updated_on = $4,
+            updated_by = $5
+            WHERE id = $6
+            RETURNING id, fournisseur_id, designation, date_creation, numero_courier, created_on, updated_on, updated_by",
         ).bind(dossier_fournisseur.designation)
         .bind(dossier_fournisseur.date_creation)
         .bind(dossier_fournisseur.numero_courier)
+        .bind(Utc::now().naive_utc())
+        .bind(updated_by)
         .bind(dossier_fournisseur_id)
+        
         .map(|row: PgRow| DossierFournisseur {
             id: DossierFournisseurId(row.get("id")),
             fournisseur_id: FournisseurId(row.get("fournisseur_id")),
             designation: row.get("designation"),
             date_creation: row.get("date_creation"),
             numero_courier: row.get("numero_courier"),
+            created_on: row.get("created_on"),
+            updated_on: row.get("updated_on"),
+            updated_by: row.get("updated_by"),
         })
         .fetch_one(&self.connection)
         .await

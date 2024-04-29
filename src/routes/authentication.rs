@@ -2,8 +2,7 @@
 use std::env;
 use std::future;
 
-use chrono::Utc;
-use warp::http::StatusCode;
+use chrono::Utc; 
 use tracing::instrument;
 use argon2::{self, Config};
 use rand::Rng;
@@ -33,7 +32,7 @@ pub async fn register(
 
     match store.add_account(account).await {
         Ok(_) => {
-            Ok(warp::reply::with_status("Account added", StatusCode::OK))
+            Ok(warp::reply::json(&"Account added".to_string()))
         },
         Err(e) => Err(warp::reject::custom(e)),
     }
@@ -50,6 +49,7 @@ pub async fn login(
     store: AuthStore,
     login: Account,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+   
     match store.get_account(login.email).await {
         Ok(account) => match verify_password(
             &account.password,

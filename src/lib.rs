@@ -1,6 +1,6 @@
 use warp::{http::Method, reply::Reply, Filter};
 use tracing_subscriber::fmt::format::FmtSpan;
-use handle_errors;
+pub use handle_errors;
 use tokio::sync::{oneshot, oneshot::Sender};
 
 pub mod types; 
@@ -17,10 +17,12 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
     let auth_store = store::authentication::AuthStore::new(conn.pool.clone()).await;
     let fournisseur_store = store::fournissueur::FournisseurStore::new(conn.pool.clone()).await;
     let dossier_fournisseur_store = store::dossier_fournisseur::DossierFournisseurStore::new(conn.pool.clone()).await;
+    let document_store = store::document::DocumentStore::new(conn.pool.clone()).await;
 
     let auth_store_filter = warp::any().map(move || auth_store.clone());
     let fournisseur_store_filter = warp::any().map(move || fournisseur_store.clone() );
     let dossier_fournisseur_store_filter = warp::any().map(move || dossier_fournisseur_store.clone() );
+    let document_store_filter = warp::any().map(move || document_store.clone());
  
 
     let cors = warp::cors()
@@ -41,8 +43,10 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
     let get_fournisseurs = warp::get()
         .and(warp::path("fournisseurs"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(warp::query())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::fournisseur::get_fournisseurs);
 
    
@@ -56,28 +60,36 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .and_then(routes::fournisseur::update_fournisseur);
 
 
-        let get_fournisseur = warp::get()
+    let get_fournisseur = warp::get()
         .and(warp::path!("fournisseurs" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::fournisseur::get_fournisseur);
 
     let delete_fournisseur = warp::delete()
         .and(warp::path!("fournisseurs" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::fournisseur::delete_fournisseur);
 
     let get_dossiers_by_fournisseur_id = warp::get()
         .and(warp::path!("fournisseurs" / String / "dossiers"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::fournisseur::get_dossiers);
 
     let get_specific_dossier_by_fournisseur_id = warp::get()
         .and(warp::path!("fournisseurs" / String / "dossiers" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::fournisseur::get_dossier);
 
 
@@ -86,7 +98,9 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
     let add_dossier_fournisseur = warp::post() 
         .and(warp::path("dossiers-fournisseurs"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(dossier_fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::dossier_fournisseur::add_dossier_fournisseur);
 
@@ -94,34 +108,58 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
     let update_dossier_fournisseur = warp::put()
         .and(warp::path!("dossiers-fournisseurs" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(dossier_fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::dossier_fournisseur::update_dossier_fournisseur);
 
 
     let get_dossier_fournisseur = warp::get()
-        .and(warp::path!("fournisseurs" / String))
+        .and(warp::path!("dossiers-fournisseurs" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(dossier_fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::dossier_fournisseur::get_dossier_fournisseur);
 
     let get_dossiers_fournisseurs = warp::get()
-        .and(warp::path!("fournisseurs"))
+        .and(warp::path!("dossiers-fournisseurs"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(warp::query())
         .and(dossier_fournisseur_store_filter.clone())
+        .and(auth_store_filter.clone())
         .and_then(routes::dossier_fournisseur::get_dossiers_fournisseurs);
 
 
     let delete_dossier_fournisseur = warp::delete()
-        .and(warp::path!("fournisseurs" / String))
+        .and(warp::path!("dossiers-fournisseurs" / String))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(dossier_fournisseur_store_filter.clone())
-        .and_then(routes::dossier_fournisseur::delete_fournisseur);
+        .and(auth_store_filter.clone())
+        .and_then(routes::dossier_fournisseur::delete_dossier_fournisseur);
 
+    let add_document = warp::post() 
+        .and(warp::path("documents"))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(document_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::document::add_document);
+
+
+    let upload = warp::multipart::form()
+        .and(warp::path("uploads"))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(auth_store_filter.clone())
+        .and_then(routes::fichier::upload);
 
     let registration = warp::post() 
-        .and(warp::path("registration"))
+        .and(warp::path("registrations"))
         .and(warp::path::end())
         .and(auth_store_filter.clone())
         .and(warp::body::json())
@@ -133,6 +171,22 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .and(auth_store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::authentication::login);
+
+    //document 
+
+    // let add_document = warp::multipart::form()
+    //     .and(warp::path("documents"))
+    //     .and(warp::path::end())
+    //     .and_then(routes::document::add_document);
+
+    // let get_documents = warp::get()
+    //     .and(warp::path("documents"))
+    //     .and(warp::path::end())
+    //     .and_then(routes::document::get_document);
+
+    // let add_document = warp::multipart::form()
+    //     .and_then(routes::document::add_document);
+
 
     get_fournisseurs
         .or(update_fournisseur)
@@ -146,42 +200,20 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .or(get_dossiers_fournisseurs)
         .or(update_dossier_fournisseur)
         .or(delete_dossier_fournisseur)
+        .or(add_document)
+        .or(upload)
         .or(registration)
         .or(login)
         .with(cors)
         .with(warp::trace::request())
         .recover(handle_errors::return_error)
 
-   // get_fournisseur
 
 
 }
 
 pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_connection::DBConnection, handle_errors::Error> {
-    // dotenv::dotenv().ok();
-
-    //  let log_filter = std::env::var("LOG_LEVEL") 
-    //      .unwrap_or_else(|_| "error=warn,factura=info,warp=error".to_owned());
-
-    // let db_port = std::env::var("DATABASE_PORT")
-    //     .ok()
-    //     .map(|val| val.parse::<u16>())
-    //     .unwrap_or(Ok(5432))
-    //     .map_err(|e| handle_errors::Error::ParseError(e))?;
-
-    // let db_user =  std::env::var("DATABASE_USER")
-    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    // let db_password =  std::env::var("DATABASE_PASSWORD")
-    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    // let db_host =  std::env::var("DATABASE_HOST")
-    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-
-    // let db_name =  std::env::var("DATABASE_NAME")
-    //     .map_err(|e| handle_errors::Error::ValueNotSet(e))?;
-        
-
+   
     let db_url = &format!("postgres://{}:{}@{}:{}/{}",
         config.db_user,
         config.db_password,
@@ -198,10 +230,19 @@ pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_co
         .await
         .expect("Cannot run migration !");
     
+    
+
+    Ok(conn)
+
+
+}
+
+pub async fn run(config: &config::Config, conn: store::db_connection::DBConnection) {
+
     let log_filter = format!(
-            "handle_errors={},rust_web_dev={},warp={}",
-            config.log_level, config.log_level, config.log_level
-        );
+        "handle_errors={},factura={},sqlx={},warp={}",
+        config.log_level, config.log_level, config.log_level,config.log_level
+    );
 
     tracing_subscriber::fmt()
         // Use the filter we built above to determine which traces to record.
@@ -212,27 +253,13 @@ pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_co
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
-    Ok(conn)
-
-
-}
-
-pub async fn run(config: &config::Config, conn: store::db_connection::DBConnection) {
-
-    // dotenv::dotenv().ok();
-
-    // let app_port = std::env::var("APPLICATION_PORT")
-    //     .ok()
-    //     .map(|val| val.parse::<u16>())
-    //     .unwrap_or(Ok(8080))
-    //     .map_err(|e| handle_errors::Error::ParseError(e));
-
     let routes = build_routes(conn).await;
     warp::serve(routes).run(([127, 0, 0, 1], config.app_port )).await;
 }
 
 
-pub async fn oneshot(conn: store::db_connection::DBConnection) -> OneshotHandler {
+pub async fn oneshot(config: &config::Config, show_traces: bool, conn: store::db_connection::DBConnection) -> OneshotHandler {
+    
     let routes = build_routes(conn).await;
     let (tx, rx) = oneshot::channel::<i32>();
 
@@ -240,6 +267,25 @@ pub async fn oneshot(conn: store::db_connection::DBConnection) -> OneshotHandler
         .to_string()
         .parse()
         .expect("Not a valid address");
+
+    if show_traces {
+        let log_filter = format!(
+            "handle_errors={},factura={},sqlx={},warp={}",
+            config.log_level, config.log_level, config.log_level,config.log_level
+        );
+        
+        tracing_subscriber::fmt()
+            // Use the filter we built above to determine which traces to record.
+            .with_env_filter(log_filter)
+            // Record an event when each span closes.
+            // This can be used to time our
+            // routes' durations!
+            .with_span_events(FmtSpan::CLOSE)
+            .init();
+
+    }
+    
+
 
     let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(socket, async {
         rx.await.ok();

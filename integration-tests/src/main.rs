@@ -10,7 +10,7 @@ use handlers::fournisseur::{
     post_fournisseur_without_suitable_role,
     put_fournisseur,
     get_fournisseur_by_id,
-    get_fournisseurs,
+    list_fournisseurs,
     get_fournisseur_with_wrong_id,
     get_fournisseur_without_auth_token,
     delete_fournisseur,
@@ -19,7 +19,12 @@ use handlers::fournisseur::{
 use handlers::dossier_fournisseur::{ 
     post_dossier_fournisseur,
     put_dossier_fournisseur,
-    get_dossier_fournisseur,
+    get_dossier_fournisseur_by_id,
+    list_dossiers_fournisseurs
+};
+
+use handlers::document::{
+    post_document
 };
 
 use handlers::user::{
@@ -138,7 +143,7 @@ async fn main() -> Result<(), handle_errors::Error> {
     }
 
     print!("Running get_fournisseurs...");
-    match std::panic::AssertUnwindSafe(get_fournisseurs(token.clone())).catch_unwind().await {
+    match std::panic::AssertUnwindSafe(list_fournisseurs(token.clone())).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);
@@ -212,8 +217,26 @@ async fn main() -> Result<(), handle_errors::Error> {
     }
 
 
-    print!("Running get_dossier_fournisseur...");
-    match std::panic::AssertUnwindSafe(get_dossier_fournisseur(token.clone())).catch_unwind().await {
+    print!("Running get_dossier_fournisseur_by_id...");
+    match std::panic::AssertUnwindSafe(get_dossier_fournisseur_by_id(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+    print!("Running list_dossiers_fournisseurs...");
+    match std::panic::AssertUnwindSafe(list_dossiers_fournisseurs(token.clone())).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+    print!("Running post_document...");
+    match std::panic::AssertUnwindSafe(post_document(token.clone())).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);

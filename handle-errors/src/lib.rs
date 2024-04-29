@@ -17,6 +17,7 @@ pub enum Error {
     Unauthorized,
     DatabaseQueryError(sqlx::Error),
     ValueNotSet(std::env::VarError),
+    CannotParseMuiltipart,
 }
 
 impl std::fmt::Display for Error {
@@ -28,8 +29,9 @@ impl std::fmt::Display for Error {
             Error::CannotDecryptToken => write!(f, "Cannot decrypt error"),
             Error::ArgonLibraryError(_) => {write!(f, "Cannot verifiy password")}
             Error::Unauthorized => write!(f, "No permission to change the underlying resource"),
-            Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data."),
+            Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data"),
             Error::ValueNotSet(ref err) => write!(f, "Environement value not set: {}",err),
+            Error::CannotParseMuiltipart => write!(f, "Cannot parse multipart data"),
         }
     }
 }
@@ -57,6 +59,12 @@ pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
                         StatusCode::UNPROCESSABLE_ENTITY,
                     ))
                 }
+            },
+            sqlx::Error::RowNotFound => {
+                Ok(warp::reply::with_status(
+                    "Entity not found".to_string(),
+                    StatusCode::NOT_FOUND,
+                ))
             },
             _ => { 
                 Ok(warp::reply::with_status(

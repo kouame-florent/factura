@@ -1,9 +1,9 @@
-use sqlx::postgres::{PgPool, PgPoolOptions,PgRow};
+use sqlx::postgres::{PgPool,PgRow};
 use sqlx::Row;
+use tracing::instrument;
 
 use handle_errors::Error;
 
-use crate::routes::authentication;
 use crate::types::{
     account::Account,
     account::AccountId,
@@ -15,6 +15,7 @@ use crate::types::{
 pub struct AuthStore{
     connection: PgPool,
 }
+
 
 impl AuthStore{
 
@@ -68,6 +69,24 @@ impl AuthStore{
             }
     }
 
+    #[instrument]
+    pub async fn get_email(
+        &self, 
+        account_id: String,
+    ) -> Result<String, Error>{
+        match  sqlx::query("SELECT email from account where id = $1")
+            .bind(account_id)
+            .map(|row: PgRow| row.get("email"))
+            .fetch_one(&self.connection)
+            .await
+            {
+                Ok(email) => Ok(email),
+                Err(error) => {      
+                    tracing::event!(tracing::Level::ERROR, "{:?}", error);
+                    Err(Error::DatabaseQueryError(error))
+                }
+            }
+    }
 
     pub async fn get_account(
             &self, 
@@ -128,7 +147,7 @@ impl AuthStore{
             Some(ref r) => r.split(",").collect(),
             None => vec![] //"".split("X").collect()
         };
-        
+   
         for role in roles{
             if role == target_role{
                 return true;

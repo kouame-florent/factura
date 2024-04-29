@@ -70,7 +70,7 @@ pub async fn post_fournisseur_without_suitable_role(token: Token) {
 }
 
 
-pub async fn get_fournisseurs(token: Token){
+pub async fn list_fournisseurs(token: Token){
 
     let f1 = PostFournisseurRequest {
 
