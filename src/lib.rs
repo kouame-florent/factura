@@ -18,11 +18,14 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
     let fournisseur_store = store::fournissueur::FournisseurStore::new(conn.pool.clone()).await;
     let dossier_fournisseur_store = store::dossier_fournisseur::DossierFournisseurStore::new(conn.pool.clone()).await;
     let document_store = store::document::DocumentStore::new(conn.pool.clone()).await;
+    let fichier_store = store::fichier::FichierStore::new(conn.pool.clone()).await;
+
 
     let auth_store_filter = warp::any().map(move || auth_store.clone());
     let fournisseur_store_filter = warp::any().map(move || fournisseur_store.clone() );
     let dossier_fournisseur_store_filter = warp::any().map(move || dossier_fournisseur_store.clone() );
     let document_store_filter = warp::any().map(move || document_store.clone());
+    let fichier_store_filter = warp::any().map(move || fichier_store.clone());
  
 
     let cors = warp::cors()
@@ -151,12 +154,13 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .and_then(routes::document::add_document);
 
 
-    let upload = warp::multipart::form()
-        .and(warp::path("uploads"))
+    let fichier = warp::multipart::form()
+        .and(warp::path("fichiers"))
         .and(warp::path::end())
         .and(routes::authentication::auth())
+        .and(fichier_store_filter.clone())
         .and(auth_store_filter.clone())
-        .and_then(routes::fichier::upload);
+        .and_then(routes::fichier::fichier);
 
     let registration = warp::post() 
         .and(warp::path("registrations"))
@@ -201,7 +205,7 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .or(update_dossier_fournisseur)
         .or(delete_dossier_fournisseur)
         .or(add_document)
-        .or(upload)
+        .or(fichier)
         .or(registration)
         .or(login)
         .with(cors)

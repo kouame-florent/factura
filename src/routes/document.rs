@@ -1,20 +1,12 @@
-use std::task;
 
-use bytes::BufMut;
-use futures_util::{StreamExt, TryStreamExt};
-use warp::filters::multipart::Part;
-use warp::multipart::FormData;
-use warp::Filter;
 use tracing::{event, instrument, Level};
 
 
 use crate::{
     store::document::DocumentStore, types::{
-         document::{NewDocument, UpdatedDocument}, pagination::{extract_pagination, 
+         document::{DocumentId, NewDocument, UpdatedDocument}, fichier::{Fichier, NewFichier}, pagination::{extract_pagination, 
         Pagination} 
     }
-    
-    
 };
 
 use crate::types::account::{Session,Roles};
@@ -53,43 +45,3 @@ pub async fn add_document(
     
 }
 
-
-// #[instrument]
-// pub async fn add_document(
-//     form: warp::multipart::FormData,
-// ) -> Result<impl warp::Reply, warp::Rejection>{
-
-//     let field_names: Vec<_> = form.and_then(|mut field| async move{
-//         let mut bytes: Vec<u8> = Vec::new();
-
-//         // field.data() only returns a piece of the content, you should call over it until it replies None
-//         while let Some(content) = field.data().await {
-//             let content = content.unwrap();
-//             bytes.put(content);
-//         }
-//         Ok((
-//             field.name().to_string(),
-//            // field.filename().unwrap().to_string(),
-//             String::from_utf8_lossy(&*bytes).to_string(),
-            
-//         ))
-//     })
-//     .try_collect()
-//     .await
-//     .unwrap();
-
-
-    
-//     //println!("Form parts {:?}", form);
-    
-//     Ok::<_, warp::Rejection>(format!("{:?}", field_names))
-// }
-
-
-// #[instrument]
-// pub async fn get_document(
-
-// ) -> Result<impl warp::Reply, warp::Rejection>{
-
-//     Ok(warp::reply::json(&"get forunisseur"))
-// }

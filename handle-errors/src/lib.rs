@@ -17,7 +17,10 @@ pub enum Error {
     Unauthorized,
     DatabaseQueryError(sqlx::Error),
     ValueNotSet(std::env::VarError),
-    CannotParseMuiltipart,
+    MuiltipartFileReadingError,
+    MultipartParsingError,
+    UnsupportedFileType,
+    InvalidDocumentId,
 }
 
 impl std::fmt::Display for Error {
@@ -31,7 +34,10 @@ impl std::fmt::Display for Error {
             Error::Unauthorized => write!(f, "No permission to change the underlying resource"),
             Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data"),
             Error::ValueNotSet(ref err) => write!(f, "Environement value not set: {}",err),
-            Error::CannotParseMuiltipart => write!(f, "Cannot parse multipart data"),
+            Error::MuiltipartFileReadingError => write!(f, "Cannot parse or read multipart file data"),
+            Error::UnsupportedFileType => write!(f, "This file type is not supported"),
+            Error::InvalidDocumentId => write!(f, "Invalid document id"),
+            Error::MultipartParsingError =>  write!(f, "Multipart parsing error"),
         }
     }
 }
