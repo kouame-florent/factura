@@ -1,9 +1,10 @@
 
 use chrono::{NaiveDate, NaiveDateTime};
+use factura::config::Config;
 
 use crate::dtos::user::{
     Token,
-    User,
+    PostUserRequest,
 };
 
 use crate::dtos::dossier_fournisseur::{
@@ -18,7 +19,17 @@ use crate::dtos::fournisseur::{
     FournisseurId, PostFournisseurAnswer, PostFournisseurRequest,
 };
 
-pub async fn post_dossier_fournisseur(token: Token) {
+use crate::handlers::test_init::{init_db, init_user};
+
+pub async fn post_dossier_fournisseur(config: &Config) {
+
+    init_db(config);
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f = PostFournisseurRequest {
         code: "d-01".to_string(),
@@ -68,7 +79,16 @@ pub async fn post_dossier_fournisseur(token: Token) {
 }
 
 
-pub async fn put_dossier_fournisseur(token: Token) {
+pub async fn put_dossier_fournisseur(config: &Config) {
+
+    init_db(config);
+    let user = PostUserRequest {
+  
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f = PostFournisseurRequest {
         code: "d-02".to_string(),
@@ -143,7 +163,15 @@ pub async fn put_dossier_fournisseur(token: Token) {
 }
 
 
-pub async fn get_dossier_fournisseur_by_id(token: Token){
+pub async fn get_dossier_fournisseur_by_id(config: &Config){
+
+    init_db(config);
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f = PostFournisseurRequest {
         code: "d-02".to_string(),
@@ -209,7 +237,17 @@ pub async fn get_dossier_fournisseur_by_id(token: Token){
 }
 
 
-pub async fn list_dossiers_fournisseurs(token: Token){
+pub async fn list_dossiers_fournisseurs(config: &Config){
+
+    init_db(config);
+
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
+
     let f = PostFournisseurRequest {
         code: "d-02".to_string(),
         sigle: "SGB".to_string(),

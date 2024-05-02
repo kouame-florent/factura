@@ -1,10 +1,12 @@
+use factura::config::Config;
+use factura::handle_errors;
 use reqwest::Error;
 use serde_json::Value;
 
 use crate::dtos::dossier_fournisseur::PostDossierFournisseurRequest;
 use crate::dtos::user::{
     Token,
-    User,
+    PostUserRequest,
 };
 use crate::dtos::fournisseur::{
     PostFournisseurAnswer,
@@ -13,9 +15,19 @@ use crate::dtos::fournisseur::{
     PutFournisseurAnswer,
     GetFournisseurAnswer,
 };
+use crate::handlers::test_init::{init_db, init_user};
 
 
-pub async fn post_fournisseur(token: Token) {
+pub async fn post_fournisseur(config: &Config) {
+
+    init_db(config).unwrap(); 
+
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f = PostFournisseurRequest {
         code: "f-01".to_string(),
@@ -42,7 +54,20 @@ pub async fn post_fournisseur(token: Token) {
     assert_eq!(res.sigle, f.sigle);
 }
 
-pub async fn post_fournisseur_without_suitable_role(token: Token) {
+
+
+pub async fn post_fournisseur_without_suitable_role(config: &Config) {
+
+    init_db(config).unwrap();
+
+    
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f = PostFournisseurRequest {
         code: "f-16".to_string(),
@@ -70,7 +95,17 @@ pub async fn post_fournisseur_without_suitable_role(token: Token) {
 }
 
 
-pub async fn list_fournisseurs(token: Token){
+pub async fn list_fournisseurs(config: &Config){
+
+    init_db(config).unwrap();
+
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f1 = PostFournisseurRequest {
 
@@ -164,7 +199,19 @@ pub async fn list_fournisseurs(token: Token){
     assert_eq!(res.len(),4); //4 because of the previous add_fournisseur test
 }
 
-pub async fn get_fournisseur_by_id(token: Token){
+
+
+pub async fn get_fournisseur_by_id(config: &Config){
+
+    init_db(config).unwrap();
+
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f1 = PostFournisseurRequest {
         code: "f-05".to_string(),
@@ -207,7 +254,16 @@ pub async fn get_fournisseur_by_id(token: Token){
 
 }
  
-pub async fn get_fournisseur_without_auth_token(token: Token){
+pub async fn get_fournisseur_without_auth_token(config: &Config){
+
+    init_db(config).unwrap();
+
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f1 = PostFournisseurRequest {
         code: "f-15".to_string(),
@@ -248,7 +304,17 @@ pub async fn get_fournisseur_without_auth_token(token: Token){
     assert_eq!(get_res,"Route not found");
 }
 
-pub async fn get_fournisseur_with_wrong_id(token: Token){
+pub async fn get_fournisseur_with_wrong_id(config: &Config){
+
+    init_db(config).unwrap();
+
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f1 = PostFournisseurRequest {
         code: "f-05".to_string(),
@@ -293,7 +359,16 @@ pub async fn get_fournisseur_with_wrong_id(token: Token){
 }
 
 
-pub async fn put_fournisseur(token: Token){
+pub async fn put_fournisseur(config: &Config){
+
+    init_db(config).unwrap();
+
+    let user = PostUserRequest {
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
 
     let f1 = PostFournisseurRequest {
 
@@ -353,7 +428,18 @@ pub async fn put_fournisseur(token: Token){
 }
 
 
-pub async fn delete_fournisseur(token: Token){
+pub async fn delete_fournisseur(config: &Config){
+
+    init_db(config);
+
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
+
     let f1 = PostFournisseurRequest {
         code: "f-09".to_string(),
         sigle: "SGB".to_string(),
@@ -393,7 +479,17 @@ pub async fn delete_fournisseur(token: Token){
 
 }
 
-pub async fn get_fournisseur_dossiers(token: Token){
+pub async fn get_fournisseur_dossiers(config: &Config){
+
+    init_db(config);
+    let user = PostUserRequest {
+
+        email: "test@email.com".to_string(),
+        password: "password".to_string(),
+        roles: "ADMIN,CE,DAFP".to_string(),
+    };
+    let token = init_user(&user, config).await.unwrap();
+
     let f1 = PostFournisseurRequest {
         code: "f-20".to_string(),
         sigle: "SGB".to_string(),
