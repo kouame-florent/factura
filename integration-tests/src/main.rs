@@ -40,7 +40,7 @@ use handlers::user::{
     get_token_for,
 };
 
-use crate::handlers::document::list_documents;
+use crate::handlers::document::{delete_document, list_documents, update_document};
 use crate::handlers::utils::get_email;
 
 
@@ -108,126 +108,143 @@ async fn main() -> Result<(), handle_errors::Error> {
         }
     }
 
-    // print!("Running list_fournisseurs...");
-    // match std::panic::AssertUnwindSafe(list_fournisseurs()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running list_fournisseurs...");
+    match std::panic::AssertUnwindSafe(list_fournisseurs()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running get_fournisseur_by_id...");
-    // match std::panic::AssertUnwindSafe(get_fournisseur_by_id()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running get_fournisseur_by_id...");
+    match std::panic::AssertUnwindSafe(get_fournisseur_by_id()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running get_fournisseur_with_wrong_id...");
-    // match std::panic::AssertUnwindSafe(get_fournisseur_with_wrong_id()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running get_fournisseur_with_wrong_id...");
+    match std::panic::AssertUnwindSafe(get_fournisseur_with_wrong_id()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running get_fournisseur_without_auth_token...");
-    // match std::panic::AssertUnwindSafe(get_fournisseur_without_auth_token()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running get_fournisseur_without_auth_token...");
+    match std::panic::AssertUnwindSafe(get_fournisseur_without_auth_token()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running put_fournisseur...");
-    // match std::panic::AssertUnwindSafe(put_fournisseur()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running put_fournisseur...");
+    match std::panic::AssertUnwindSafe(put_fournisseur()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running delete_fournisseur...");
-    // match std::panic::AssertUnwindSafe(delete_fournisseur()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running delete_fournisseur...");
+    match std::panic::AssertUnwindSafe(delete_fournisseur()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // //test dossier fournisseur
+    //test dossier fournisseur
 
-    // print!("Running post_dossier_fournisseur...");
-    // match std::panic::AssertUnwindSafe(post_dossier_fournisseur()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running post_dossier_fournisseur...");
+    match std::panic::AssertUnwindSafe(post_dossier_fournisseur()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running put_dossier_fournisseur...");
-    // match std::panic::AssertUnwindSafe(put_dossier_fournisseur()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running put_dossier_fournisseur...");
+    match std::panic::AssertUnwindSafe(put_dossier_fournisseur()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
 
-    // print!("Running get_dossier_fournisseur_by_id...");
-    // match std::panic::AssertUnwindSafe(get_dossier_fournisseur_by_id()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running get_dossier_fournisseur_by_id...");
+    match std::panic::AssertUnwindSafe(get_dossier_fournisseur_by_id()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running list_dossiers_fournisseurs...");
-    // match std::panic::AssertUnwindSafe(list_dossiers_fournisseurs()).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running list_dossiers_fournisseurs...");
+    match std::panic::AssertUnwindSafe(list_dossiers_fournisseurs()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running post_document...");
-    // match std::panic::AssertUnwindSafe(post_document(&config)).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running post_document...");
+    match std::panic::AssertUnwindSafe(post_document()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running get_document...");
-    // match std::panic::AssertUnwindSafe(get_document_by_id(&config)).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running put_documents...");
+    match std::panic::AssertUnwindSafe(update_document()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
-    // print!("Running list_documents...");
-    // match std::panic::AssertUnwindSafe(list_documents(&config)).catch_unwind().await {
-    //     Ok(_) => println!("✓"),
-    //     Err(_) => {
-    //         let _ = handler.sender.send(1);
-    //         std::process::exit(1);
-    //     }
-    // }
+    print!("Running get_document...");
+    match std::panic::AssertUnwindSafe(get_document_by_id()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
+    print!("Running list_documents...");
+    match std::panic::AssertUnwindSafe(list_documents()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+    print!("Running delete_document...");
+    match std::panic::AssertUnwindSafe(delete_document()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
 
 
     let _ = handler.sender.send(1);
