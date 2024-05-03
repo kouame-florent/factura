@@ -12,18 +12,20 @@ use crate::dtos::document::{
     GetDocumentAnswer, PostDocumentAnswer, PostDocumentRequest
 };
 
-use crate::handlers::test_init::{init_db, init_user};
+use crate::handlers::utils::{create_db, drop_db, get_email, register_and_login};
 
 pub async fn post_document(config: &Config) {
 
-    init_db(config).unwrap();
+    drop_db(config).await.unwrap();
+    create_db(config).await.unwrap();
 
     let user = PostUserRequest {
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+
+    let token = register_and_login(&user).await;
 
     let f = PostFournisseurRequest {
         code: "d-01".to_string(),
@@ -56,7 +58,7 @@ pub async fn post_document(config: &Config) {
     
     };
 
-    let client = reqwest::Client::new();
+
     let dof_res = client
         .post("http://localhost:3030/dossiers-fournisseurs")
         .header("Authorization", token.0.clone())
@@ -82,7 +84,7 @@ pub async fn post_document(config: &Config) {
     
     };
 
-    let client = reqwest::Client::new();
+  
     let doc_res = client
         .post("http://localhost:3030/documents")
         .header("Authorization", token.0)
@@ -100,15 +102,17 @@ pub async fn post_document(config: &Config) {
 
 pub async fn get_document_by_id(config: &Config){
 
-    init_db(config).unwrap();
+    drop_db(config).await.unwrap();
+    create_db(config).await.unwrap();
 
     let user = PostUserRequest {
 
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+
+    let token = register_and_login(&user).await;
 
     let f = PostFournisseurRequest {
         code: "d-04".to_string(),
@@ -140,7 +144,7 @@ pub async fn get_document_by_id(config: &Config){
     
     };
 
-    let client = reqwest::Client::new();
+
     let dof_res = client
         .post("http://localhost:3030/dossiers-fournisseurs")
         .header("Authorization", token.0.clone())
@@ -165,8 +169,6 @@ pub async fn get_document_by_id(config: &Config){
 
     
     };
-
-    let client = reqwest::Client::new();
 
     let post_res = client
         .post("http://localhost:3030/documents")
@@ -199,14 +201,16 @@ pub async fn get_document_by_id(config: &Config){
 
 pub async fn list_documents(config: &Config){
 
-    init_db(config).unwrap();
+    drop_db(config).await.unwrap();
+    create_db(config).await.unwrap();
 
     let user = PostUserRequest {
         email: "test@email.com".to_string(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+
+    let token = register_and_login(&user).await;
 
     let f = PostFournisseurRequest {
         code: "d-04".to_string(),
@@ -238,7 +242,7 @@ pub async fn list_documents(config: &Config){
     
     };
 
-    let client = reqwest::Client::new();
+
     let dof_res = client
         .post("http://localhost:3030/dossiers-fournisseurs")
         .header("Authorization", token.0.clone())
@@ -276,8 +280,6 @@ pub async fn list_documents(config: &Config){
 
     
     };
-
-    let client = reqwest::Client::new();
 
     let _ = client
         .post("http://localhost:3030/documents")

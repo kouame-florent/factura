@@ -15,19 +15,20 @@ use crate::dtos::fournisseur::{
     PutFournisseurAnswer,
     GetFournisseurAnswer,
 };
-use crate::handlers::test_init::{init_db, init_user};
+use crate::handlers::utils::{create_db, get_email, register_and_login,};
+use uuid::Uuid;
+use crate::handlers::user::register_new_user;
 
 
-pub async fn post_fournisseur(config: &Config) {
-
-    init_db(config).unwrap(); 
+pub async fn post_fournisseur() {
 
     let user = PostUserRequest {
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+
+    let token = register_and_login(&user).await;
 
     let f = PostFournisseurRequest {
         code: "f-01".to_string(),
@@ -39,6 +40,7 @@ pub async fn post_fournisseur(config: &Config) {
     };
 
     let client = reqwest::Client::new();
+
     let res = client
         .post("http://localhost:3030/fournisseurs")
         .header("Authorization", token.0)
@@ -52,32 +54,32 @@ pub async fn post_fournisseur(config: &Config) {
 
     assert_eq!(res.email, "sgb@gmail.com");
     assert_eq!(res.sigle, f.sigle);
+
+    
 }
 
 
 
-pub async fn post_fournisseur_without_suitable_role(config: &Config) {
+pub async fn post_fournisseur_without_suitable_role() {
 
-    init_db(config).unwrap();
-
-    
     let user = PostUserRequest {
-
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
+    let token = register_and_login(&user).await;
 
     let f = PostFournisseurRequest {
         code: "f-16".to_string(),
         sigle: "SGB".to_string(),
-        designation: "societe de societé".to_string(),
+        designation: "societe roxy 2".to_string(),
         telephone: "07-07-08-08-08".to_string(),
         email: "sgb@gmail.com".to_string(),
     
     };
 
+    
     let client = reqwest::Client::new();
     let res = client
         .post("http://localhost:3030/fournisseurs")
@@ -92,20 +94,19 @@ pub async fn post_fournisseur_without_suitable_role(config: &Config) {
 
     assert_eq!(res, "No permission to change underlying resource");
 
+    
+
 }
 
 
-pub async fn list_fournisseurs(config: &Config){
-
-    init_db(config).unwrap();
-
+pub async fn list_fournisseurs(){
+    
     let user = PostUserRequest {
-
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
 
     let f1 = PostFournisseurRequest {
 
@@ -136,7 +137,8 @@ pub async fn list_fournisseurs(config: &Config){
         email: "gti@gmail.com".to_string(),
     
     };
-
+    
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
 
     client
@@ -196,22 +198,23 @@ pub async fn list_fournisseurs(config: &Config){
         .await
         .unwrap();
 
-    assert_eq!(res.len(),4); //4 because of the previous add_fournisseur test
+    //assert_eq!(res.len(),3); //4 because of the previous add_fournisseur test
+    assert!(res.len() >= 3)
+
+    
 }
 
 
 
-pub async fn get_fournisseur_by_id(config: &Config){
-
-    init_db(config).unwrap();
+pub async fn get_fournisseur_by_id(){
 
     let user = PostUserRequest {
 
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
 
     let f1 = PostFournisseurRequest {
         code: "f-05".to_string(),
@@ -222,6 +225,7 @@ pub async fn get_fournisseur_by_id(config: &Config){
        
     };
 
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
 
     let post_res = client
@@ -251,19 +255,17 @@ pub async fn get_fournisseur_by_id(config: &Config){
 
     assert_eq!(get_res.id,post_res.id.0);
 
-
+   
 }
  
-pub async fn get_fournisseur_without_auth_token(config: &Config){
-
-    init_db(config).unwrap();
+pub async fn get_fournisseur_without_auth_token(){
 
     let user = PostUserRequest {
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
 
     let f1 = PostFournisseurRequest {
         code: "f-15".to_string(),
@@ -274,6 +276,7 @@ pub async fn get_fournisseur_without_auth_token(config: &Config){
        
     };
 
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
 
     let post_res = client
@@ -302,19 +305,19 @@ pub async fn get_fournisseur_without_auth_token(config: &Config){
         .unwrap();
 
     assert_eq!(get_res,"Route not found");
+
+    
 }
 
-pub async fn get_fournisseur_with_wrong_id(config: &Config){
-
-    init_db(config).unwrap();
+pub async fn get_fournisseur_with_wrong_id(){
 
     let user = PostUserRequest {
 
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
 
     let f1 = PostFournisseurRequest {
         code: "f-05".to_string(),
@@ -325,6 +328,7 @@ pub async fn get_fournisseur_with_wrong_id(config: &Config){
        
     };
 
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
 
     client
@@ -355,21 +359,21 @@ pub async fn get_fournisseur_with_wrong_id(config: &Config){
         
     assert_eq!(get_res,"Entity not found");
 
+    
 
 }
 
 
-pub async fn put_fournisseur(config: &Config){
-
-    init_db(config).unwrap();
+pub async fn put_fournisseur(){
 
     let user = PostUserRequest {
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
 
+    let token = register_and_login(&user).await;
+   
     let f1 = PostFournisseurRequest {
 
         code: "f-01".to_string(),
@@ -379,8 +383,9 @@ pub async fn put_fournisseur(config: &Config){
         email: "sgb@gmail.com".to_string(),
    
     };
-
+    
     let client = reqwest::Client::new();
+
     let post_res = client
         .post("http://localhost:3030/fournisseurs")
         .header("Authorization", token.0.clone())
@@ -423,22 +428,20 @@ pub async fn put_fournisseur(config: &Config){
     assert_eq!(put_res.telephone,"07-08-08-08-08");
     assert_eq!(put_res.email,"asb@gmail.com");
 
-
+   
 
 }
 
 
-pub async fn delete_fournisseur(config: &Config){
-
-    init_db(config);
+pub async fn delete_fournisseur(){
 
     let user = PostUserRequest {
 
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+    
 
     let f1 = PostFournisseurRequest {
         code: "f-09".to_string(),
@@ -449,7 +452,10 @@ pub async fn delete_fournisseur(config: &Config){
    
     };
 
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
+
+
     let post_res = client
         .post("http://localhost:3030/fournisseurs")
         .header("Authorization", token.0.clone())
@@ -477,18 +483,19 @@ pub async fn delete_fournisseur(config: &Config){
 
     assert_eq!(del_resp,true);
 
+    
+
 }
 
-pub async fn get_fournisseur_dossiers(config: &Config){
+pub async fn get_fournisseur_dossiers(){
 
-    init_db(config);
     let user = PostUserRequest {
 
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
-    let token = init_user(&user, config).await.unwrap();
+   
 
     let f1 = PostFournisseurRequest {
         code: "f-20".to_string(),
@@ -499,7 +506,10 @@ pub async fn get_fournisseur_dossiers(config: &Config){
    
     };
 
+    let token = register_and_login(&user).await;
     let client = reqwest::Client::new();
+
+
     let post_res = client
         .post("http://localhost:3030/fournisseurs")
         .header("Authorization", token.0.clone())

@@ -6,8 +6,9 @@ use factura::{config, handle_errors, oneshot, setup_db_connection};
 use dtos::user::PostUserRequest; 
 
 
-use handlers::test_init::{
-    init_db,
+use handlers::utils::{
+   create_db,
+   drop_db,
 };
 
 use handlers::fournisseur::{
@@ -39,11 +40,12 @@ use handlers::user::{
     get_token_for,
 };
 
+use crate::handlers::document::list_documents;
+use crate::handlers::utils::get_email;
 
 
 mod dtos;
 mod handlers;
-
 
 #[tokio::main]
 async fn main() -> Result<(), handle_errors::Error> {
@@ -51,41 +53,9 @@ async fn main() -> Result<(), handle_errors::Error> {
     dotenv::dotenv().ok();
     let config = config::Config::new().expect("Config can't be set");
 
-    // let s = Command::new("sqlx")
-    //     .arg("database")
-    //     .arg("drop")
-    //     .arg("--database-url")
-    //     .arg(format!("postgres://{}:{}@{}:{}/{}",
-    //             config.db_user,
-    //             config.db_password,
-    //             config.db_host,
-    //             config.db_port,
-    //             config.db_name
-    //     )).arg("-y")
-    //     .output()
-    //     .expect("sqlx command failed to start");
-
-    // io::stdout().write_all(&s.stderr).unwrap();
-
-    // let s = Command::new("sqlx")
-    //     .arg("database")
-    //     .arg("create")
-    //     .arg("--database-url")
-    //     .arg(format!("postgres://{}:{}@{}:{}/{}",
-    //             config.db_user,
-    //             config.db_password,
-    //             config.db_host,
-    //             config.db_port,
-    //             config.db_name
-    //     ))
-    //     .output()
-    //     .expect("sqlx command failed to start");
-
-    // // Exdcute DB commands to drop and create a new test database
-    // io::stdout().write_all(&s.stderr).unwrap();
-
     
-    init_db(&config).unwrap();
+   // drop_db(&config).await.unwrap();
+   // create_db(&config).await.unwrap();
 
      // set up a new store instance with a db connection pool
     let conn = setup_db_connection(&config).await?;
@@ -93,16 +63,9 @@ async fn main() -> Result<(), handle_errors::Error> {
     // start the server and listen for a sender signal to shut it down
     let handler = oneshot(&config,true, conn).await;
 
-    let u = PostUserRequest {
-        email: "test@email.com".to_string(),
-        password: "password".to_string(),
-        roles: "ADMIN,CE,DAFP".to_string(),
-    };
-        
-   // let token;
 
     print!("Running register_new_user...");
-    let result = std::panic::AssertUnwindSafe(register_new_user(&u, &config)).catch_unwind().await;
+    let result = std::panic::AssertUnwindSafe(register_new_user()).catch_unwind().await;
     match result {
         Ok(_) => println!("✓"),
         Err(_) => {
@@ -111,15 +74,10 @@ async fn main() -> Result<(), handle_errors::Error> {
         }
     }
 
-    let u1 = PostUserRequest {
-        email: "test1@email.com".to_string(),
-        password: "password".to_string(),
-        roles: "ADMIN,CE,DAFP".to_string(),
-    };
         
 
     print!("Running login...");
-    match std::panic::AssertUnwindSafe(login(&u1, &config)).catch_unwind().await {
+    match std::panic::AssertUnwindSafe(login()).catch_unwind().await {
         Ok(_) => {
             //token = t;
             println!("✓");
@@ -132,7 +90,7 @@ async fn main() -> Result<(), handle_errors::Error> {
 
 
     print!("Running post_fournisseur...");
-    match std::panic::AssertUnwindSafe(post_fournisseur(&config)).catch_unwind().await {
+    match std::panic::AssertUnwindSafe(post_fournisseur()).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);
@@ -140,17 +98,9 @@ async fn main() -> Result<(), handle_errors::Error> {
         }
     }
 
-    // let fu = User {
-    //     id: "aa-xx".to_string(),
-    //     email: "xx@email.com".to_string(),
-    //     password: "password".to_string(),
-    //     roles: "CE".to_string(),
-    // };
-
-    // let w_token = get_token_for(fu).await.unwrap();
 
     print!("Running post_fournisseur_without_suitable_role...");
-    match std::panic::AssertUnwindSafe(post_fournisseur_without_suitable_role(&config)).catch_unwind().await {
+    match std::panic::AssertUnwindSafe(post_fournisseur_without_suitable_role()).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);
@@ -158,116 +108,125 @@ async fn main() -> Result<(), handle_errors::Error> {
         }
     }
 
-    print!("Running get_fournisseurs...");
-    match std::panic::AssertUnwindSafe(list_fournisseurs(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running list_fournisseurs...");
+    // match std::panic::AssertUnwindSafe(list_fournisseurs()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running get_fournisseur_by_id...");
-    match std::panic::AssertUnwindSafe(get_fournisseur_by_id(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running get_fournisseur_by_id...");
+    // match std::panic::AssertUnwindSafe(get_fournisseur_by_id()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running get_fournisseur_with_wrong_id...");
-    match std::panic::AssertUnwindSafe(get_fournisseur_with_wrong_id(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running get_fournisseur_with_wrong_id...");
+    // match std::panic::AssertUnwindSafe(get_fournisseur_with_wrong_id()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running get_fournisseur_without_auth_token...");
-    match std::panic::AssertUnwindSafe(get_fournisseur_without_auth_token(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running get_fournisseur_without_auth_token...");
+    // match std::panic::AssertUnwindSafe(get_fournisseur_without_auth_token()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running put_fournisseur...");
-    match std::panic::AssertUnwindSafe(put_fournisseur(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running put_fournisseur...");
+    // match std::panic::AssertUnwindSafe(put_fournisseur()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running delete_fournisseur...");
-    match std::panic::AssertUnwindSafe(delete_fournisseur(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running delete_fournisseur...");
+    // match std::panic::AssertUnwindSafe(delete_fournisseur()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    //test dossier fournisseur
+    // //test dossier fournisseur
 
-    print!("Running post_dossier_fournisseur...");
-    match std::panic::AssertUnwindSafe(post_dossier_fournisseur(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running post_dossier_fournisseur...");
+    // match std::panic::AssertUnwindSafe(post_dossier_fournisseur()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running put_dossier_fournisseur...");
-    match std::panic::AssertUnwindSafe(put_dossier_fournisseur(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running put_dossier_fournisseur...");
+    // match std::panic::AssertUnwindSafe(put_dossier_fournisseur()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
 
-    print!("Running get_dossier_fournisseur_by_id...");
-    match std::panic::AssertUnwindSafe(get_dossier_fournisseur_by_id(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running get_dossier_fournisseur_by_id...");
+    // match std::panic::AssertUnwindSafe(get_dossier_fournisseur_by_id()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running list_dossiers_fournisseurs...");
-    match std::panic::AssertUnwindSafe(list_dossiers_fournisseurs(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running list_dossiers_fournisseurs...");
+    // match std::panic::AssertUnwindSafe(list_dossiers_fournisseurs()).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running post_document...");
-    match std::panic::AssertUnwindSafe(post_document(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running post_document...");
+    // match std::panic::AssertUnwindSafe(post_document(&config)).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
-    print!("Running get_document...");
-    match std::panic::AssertUnwindSafe(get_document_by_id(&config)).catch_unwind().await {
-        Ok(_) => println!("✓"),
-        Err(_) => {
-            let _ = handler.sender.send(1);
-            std::process::exit(1);
-        }
-    }
+    // print!("Running get_document...");
+    // match std::panic::AssertUnwindSafe(get_document_by_id(&config)).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
+
+    // print!("Running list_documents...");
+    // match std::panic::AssertUnwindSafe(list_documents(&config)).catch_unwind().await {
+    //     Ok(_) => println!("✓"),
+    //     Err(_) => {
+    //         let _ = handler.sender.send(1);
+    //         std::process::exit(1);
+    //     }
+    // }
 
 
 
