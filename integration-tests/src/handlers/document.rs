@@ -308,7 +308,7 @@ pub async fn get_document_by_id(){
 pub async fn list_documents(){
 
     let user = PostUserRequest {
-        email: "test@email.com".to_string(),
+        email: get_email(),
         password: "password".to_string(),
         roles: "ADMIN,CE,DAFP".to_string(),
     };
@@ -417,7 +417,7 @@ pub async fn list_documents(){
         .await
         .unwrap();
 
-        assert_eq!(list_res.len(),2);
+        assert!(list_res.len() >= 2);
 }
 
 

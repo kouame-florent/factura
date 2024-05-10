@@ -1,22 +1,23 @@
 use std::str::FromStr;
-
 use bytes::BufMut;
 use futures_util::{StreamExt, TryStreamExt};
 use uuid::Uuid;
+use warp::filters::fs::File;
 use warp::filters::multipart::Part;
 use tracing::{event, instrument, Level};
-
+//use warp::reply::Response;
+//use warp::Filter;
 use crate::types::{document::DocumentId, fichier::NewFichier};
-
-
 use crate::types::account::{Session,Roles};
 use crate::store::authentication::AuthStore;
 use crate::store::fichier::FichierStore;
+use warp::http::header::{HeaderMap, HeaderValue};
+use warp::{Filter, http::Response};
 
 
 
 #[instrument]
-pub async fn fichier(
+pub async fn add_fichier(
     form: warp::multipart::FormData,
     session: Session,
     store: FichierStore,
@@ -24,23 +25,12 @@ pub async fn fichier(
 ) -> Result<impl warp::Reply, warp::Rejection>{
 
     let account_id = session.account_id;
-    let email = match auth_store.get_email(account_id.0.clone()).await {  
-        Ok(email) => {
-            email
-        },
-        Err(_) => {
-            return Err(warp::reject::custom(handle_errors::Error::Unauthorized));
-        }
-    };
+    let email = auth_store.get_email(account_id.0.clone()).await?;
     let admin: Roles = Roles::ADMIN;
 
     if auth_store.has_authorization(account_id.0, admin.as_str().to_string()).await?{
 
-        let fichier = match handle_multiparts(form).await{
-            Ok(nf) => nf, 
-            Err(e) => return Err(e)
-        };
-    
+        let fichier = handle_multiparts(form).await?;
         match store.add_fichier(fichier, email.to_string()).await{
             Ok(f) => {
                 Ok(warp::reply::json(&f))
@@ -57,6 +47,51 @@ pub async fn fichier(
 
 }
 
+#[instrument]
+pub async fn get_fichier(
+    id: String,
+    session: Session,
+    store: FichierStore,
+    auth_store: AuthStore,
+) -> Result<impl warp::Reply, warp::Rejection>{
+
+    let account_id = session.account_id;
+    //let email = auth_store.get_email(account_id.0.clone()).await?;
+    let admin: Roles = Roles::CE;
+
+    if auth_store.has_authorization(account_id.0, admin.as_str().to_string()).await?{
+        match store.get_fichier(id).await {
+            Ok(f) => {
+                let file_name = format!("/home/florent/backup_23_02_2024/project-anrmp/uploads/{}.{}", f.data_pointer, "png");
+                println!("---File path: {:?}",file_name.clone());
+                let content = tokio::fs::read(file_name).await;
+                match content {
+                    Ok(c) => {
+                       // Ok(warp::reply::Response::new(c.into()))
+                        //let mut headers = HeaderMap::new();
+                        //headers.insert("Content-Type", HeaderValue::from_static(f.mime_type.as_str()));
+                        //warp::reply::with::headers(headers)::wi
+                        Ok(Response::builder()
+                            .header("Content-Type", f.mime_type.as_str())
+                            .body(c).unwrap()
+                        )
+                    },
+                    Err(_) => Err(warp::reject::custom(handle_errors::Error::FileNotFound))
+                }
+            },
+            Err(e) => Err(warp::reject::custom(e)),
+        }
+    
+
+    }else{
+        Err(warp::reject::custom(handle_errors::Error::Unauthorized))
+    }
+    
+}
+
+// async fn download(){
+
+// }
 
 async fn handle_multiparts(form: warp::multipart::FormData) -> Result<NewFichier, warp::Rejection>{
 
@@ -76,25 +111,14 @@ async fn handle_multiparts(form: warp::multipart::FormData) -> Result<NewFichier
             Ok(p) => {
                 if p.name() == "file" {
                     let content_type = p.content_type();
-                    let mime = match content_type.clone() {
-                          Some(t) => t.to_string(),
-                          None => "text/plain".to_string()
-                    };
-                    new_fichier.mime_type = mime;
+                    let mime = content_type.unwrap_or("text/plain");
+
+                    new_fichier.mime_type = mime.to_string();
                     new_fichier.file_name = String::from_str(p.filename().unwrap()).unwrap() ;
 
-                    let file_ext = match get_file_extension(content_type)
-                            .await {
-                                Ok(ext) => ext,
-                                Err(e) => return Err(e)
-                            };
-                    let content = match get_part_data(p)
-                            .await {
-                                Ok(content) => content,
-                                Err(e) => return Err(e)
-                            };  
-
-                    
+                    let file_ext = get_file_extension(content_type).await?;
+                    let content = get_part_data(p).await?;
+                                       
                     let d_pointer =  Uuid::new_v4().to_string();
                     new_fichier.file_size = content.len() as i64;  
                     new_fichier.data_pointer = d_pointer.clone();

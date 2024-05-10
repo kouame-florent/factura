@@ -9,7 +9,7 @@ pub struct Document {
     pub dossier_fournisseur_id: DossierFournisseurId,
     pub code: String,
     pub libelle: String,
-    pub categorie: Categorie,
+    pub categorie: String,
     pub date_signature: Option<NaiveDateTime>,
     pub signataire: Option<String>,
     pub montant: Option<i64>,
@@ -25,7 +25,7 @@ pub struct NewDocument {
     pub dossier_fournisseur_id: DossierFournisseurId,
     pub code: String,
     pub libelle: String,
-    pub categorie: Categorie,
+    pub categorie: String,
     pub date_signature: Option<NaiveDateTime>,
     pub signataire: Option<String>,
     pub montant: Option<i64>,
@@ -38,7 +38,7 @@ pub struct UpdatedDocument {
     pub dossier_fournisseur_id: DossierFournisseurId,
     pub code: String,
     pub libelle: String,
-    pub categorie: Categorie,
+    pub categorie: String,
     pub date_signature: Option<NaiveDateTime>,
     pub signataire: Option<String>,
     pub montant: Option<i64>,
@@ -52,7 +52,7 @@ pub struct DocumentId(pub String);
 
 
 #[derive(sqlx::Type)]
-#[sqlx(type_name = "categorie_document")]
+//#[sqlx(type_name = "categorie_document")]
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Categorie{
     FactureProformat,

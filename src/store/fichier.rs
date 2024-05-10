@@ -36,7 +36,7 @@ impl FichierStore{
                     file_size,
                     mime_type,
                     data_pointer,
-                    updated_by,
+                    updated_by
                 )
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
                  RETURNING *",
@@ -70,5 +70,36 @@ impl FichierStore{
         }
 
     }
+
+
+    pub async fn get_fichier(
+        &self,
+        id: String,
+    ) -> Result<Fichier, Error> {
+        match sqlx::query("SELECT * from fichier WHERE id = $1")
+        .bind(id)
+        .map(|row: PgRow| Fichier {
+            id: row.get("id"),
+            document_id: DocumentId(row.get("document_id")),
+            file_name: row.get("file_name"),
+            file_size: row.get("file_size"),
+            mime_type: row.get("mime_type"),
+            data_pointer: row.get("data_pointer"),
+            created_on: row.get("created_on"),
+            updated_on: row.get("updated_on"),
+            updated_by: row.get("updated_by")
+        })
+        .fetch_one(&self.connection)
+        .await {
+            Ok(fichier) => Ok(fichier),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError(e))
+        }
+    } 
+        
+
+    }
+
 
 }

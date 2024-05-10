@@ -154,13 +154,66 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .and_then(routes::document::add_document);
 
 
-    let fichier = warp::multipart::form()
-        .and(warp::path("fichiers"))
+    let get_document = warp::get()
+        .and(warp::path!("documents" / String))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(document_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and_then(routes::document::get_document);
+
+    let get_documents = warp::get()
+        .and(warp::path!("documents"))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(warp::query())
+        .and(document_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and_then(routes::document::get_documents);
+
+    let update_document =  warp::put()
+        .and(warp::path!("documents" / String))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(document_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::document::update_document);
+
+    let delete_document = warp::delete()
+        .and(warp::path!("documents" / String))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(document_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and_then(routes::document::delete_document);
+
+
+    let add_fichier = warp::multipart::form()
+        .and(warp::path!("fichiers"))
         .and(warp::path::end())
         .and(routes::authentication::auth())
         .and(fichier_store_filter.clone())
         .and(auth_store_filter.clone())
-        .and_then(routes::fichier::fichier);
+        .and_then(routes::fichier::add_fichier);
+
+    // let get_fichier = warp::get()
+    //     .and(warp::path!("fichiers" / String))
+    //     .and(warp::path::end())
+    //     .and(warp::fs::dir("/home/florent/backup_23_02_2024/project-anrmp/uploads"))
+    //     .and(routes::authentication::auth())
+    //     .and(fichier_store_filter.clone())
+    //     .and(auth_store_filter.clone())
+    //     .and_then(routes::fichier::get_fichier);
+
+    let get_fichier = warp::get()
+        .and(warp::path!("fichiers" / String))
+        .and(warp::path::end())
+        .and(routes::authentication::auth())
+        .and(fichier_store_filter.clone())
+        .and(auth_store_filter.clone())
+        .and_then(routes::fichier::get_fichier);
+        
 
     let registration = warp::post() 
         .and(warp::path("registrations"))
@@ -178,15 +231,7 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
 
     //document 
 
-    // let add_document = warp::multipart::form()
-    //     .and(warp::path("documents"))
-    //     .and(warp::path::end())
-    //     .and_then(routes::document::add_document);
-
-    // let get_documents = warp::get()
-    //     .and(warp::path("documents"))
-    //     .and(warp::path::end())
-    //     .and_then(routes::document::get_document);
+    
 
     // let add_document = warp::multipart::form()
     //     .and_then(routes::document::add_document);
@@ -205,7 +250,12 @@ async fn build_routes(conn: store::db_connection::DBConnection) -> impl Filter<E
         .or(update_dossier_fournisseur)
         .or(delete_dossier_fournisseur)
         .or(add_document)
-        .or(fichier)
+        .or(get_document)
+        .or(get_documents)
+        .or(update_document)
+        .or(delete_document)
+        .or(add_fichier)
+        .or(get_fichier)
         .or(registration)
         .or(login)
         .with(cors)
@@ -225,7 +275,6 @@ pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_co
         config.db_port,
         config.db_name
     );
-        
 
     let conn = store::db_connection::DBConnection::new(db_url).await;
 
@@ -233,12 +282,8 @@ pub async fn setup_db_connection(config: &config::Config) -> Result<store::db_co
         .run(&conn.pool.clone())
         .await
         .expect("Cannot run migration !");
-    
-    
 
     Ok(conn)
-
-
 }
 
 pub async fn run(config: &config::Config, conn: store::db_connection::DBConnection) {
@@ -289,8 +334,6 @@ pub async fn oneshot(config: &config::Config, show_traces: bool, conn: store::db
 
     }
     
-
-
     let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(socket, async {
         rx.await.ok();
     });

@@ -1,17 +1,9 @@
 -- Add up migration script here
-
--- Create the enumeration type
-CREATE TYPE categorie_document AS ENUM ('FactureProformat',
-    'FactureDefinitive',
-    'BonDeLivraison',
-    'BonDeCommande'
-);
-
 CREATE TABLE IF NOT EXISTS document (
     id VARCHAR PRIMARY KEY,
     code VARCHAR (255),
     libelle VARCHAR (255),
-    categorie categorie_document,
+    categorie VARCHAR (255),
     date_signature TIMESTAMP,
     signataire VARCHAR (255),
     montant BIGINT,

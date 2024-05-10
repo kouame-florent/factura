@@ -15,7 +15,7 @@ use crate::dtos::fournisseur::{
     PutFournisseurAnswer,
     GetFournisseurAnswer,
 };
-use crate::handlers::utils::{create_db, get_email, register_and_login,};
+use crate::handlers::utils::{get_email, register_and_login,};
 use uuid::Uuid;
 use crate::handlers::user::register_new_user;
 

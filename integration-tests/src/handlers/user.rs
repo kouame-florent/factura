@@ -3,7 +3,7 @@ use reqwest::Error;
 use serde_json::Value;
 
 
-use crate::{dtos::user::{PostUserRequest, Token}, handlers::utils::{create_db, get_email}};
+use crate::{dtos::user::{PostUserRequest, Token}, handlers::utils::{get_email}};
 
 
 pub async fn register_new_user() {

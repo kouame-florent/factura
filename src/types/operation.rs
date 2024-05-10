@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::types::dossier_fournisseur::DossierFournisseurId;
@@ -14,6 +14,25 @@ pub struct Operation {
     pub resultat: Option<Resultat>,
     pub observation: Option<String>,
     pub motivation: Option<String>,
+    pub created_on: NaiveDateTime,
+    pub updated_on: NaiveDateTime,
+    pub updated_by: String,
+
+}
+
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct NewOperation {
+    pub id: OperationId,
+    pub dossier_fournisseur_id: DossierFournisseurId,
+    pub code: String,
+    pub libelle: String,
+    pub categorie: CategorieOperation,
+    pub date: DateTime<Utc>,
+    pub resultat: Option<Resultat>,
+    pub observation: Option<String>,
+    pub motivation: Option<String>,
+    
     
 
 }

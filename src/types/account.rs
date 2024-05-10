@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -12,6 +12,22 @@ pub struct Session {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Account {
     pub id: Option<AccountId>, 
+    pub email: String,
+    pub password: String,
+    //comma separated user roles
+    pub roles: Option<String>, 
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NewAccount {
+    pub email: String,
+    pub password: String,
+    //comma separated user roles
+    pub roles: Option<String>, 
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UpdatedAccount {
     pub email: String,
     pub password: String,
     //comma separated user roles

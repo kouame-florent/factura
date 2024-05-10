@@ -12,58 +12,58 @@ use crate::handlers::user::{
     register_new_user,
 };
 
-pub async fn create_db(config: &Config) -> Result<(),handle_errors::Error>{
+// pub async fn create_db(config: &Config) -> Result<(),handle_errors::Error>{
 
-    let s = Command::new("sqlx")
-    .arg("database")
-    .arg("create")
-    .arg("--database-url")
-    .arg(format!("postgres://{}:{}@{}:{}/{}",
-            config.db_user,
-            config.db_password,
-            config.db_host,
-            config.db_port,
-            config.db_name
-    ))
-    .output()
-    .expect("sqlx command failed to start");
+//     let s = Command::new("sqlx")
+//     .arg("database")
+//     .arg("create")
+//     .arg("--database-url")
+//     .arg(format!("postgres://{}:{}@{}:{}/{}",
+//             config.db_user,
+//             config.db_password,
+//             config.db_host,
+//             config.db_port,
+//             config.db_name
+//     ))
+//     .output()
+//     .expect("sqlx command failed to start");
 
-    // Exdcute DB commands to drop and create a new test database
-    io::stdout().write_all(&s.stderr).unwrap();
+//     // Exdcute DB commands to drop and create a new test database
+//     io::stdout().write_all(&s.stderr).unwrap();
 
-    Ok(())
-
-
-
-}
-
-pub async fn drop_db(config: &Config)-> Result<(),handle_errors::Error>{
-
-    let db_url = format!("postgres://{}:{}@{}:{}/{}",
-        config.db_user,
-        config.db_password,
-        config.db_host,
-        config.db_port,
-        config.db_name
-    );
-
-    //println!("--- DB URL: {:?}",db_url.clone());
-
-    let s = Command::new("sqlx")
-        .arg("database")
-        .arg("drop")
-        .arg("--force")
-        .arg("--database-url")
-        .arg(db_url).arg("-y")
-        .output()
-        .expect("sqlx command failed to start");
-
-    io::stdout().write_all(&s.stderr).unwrap();
-
-    Ok(())
+//     Ok(())
 
 
- }
+
+// }
+
+// pub async fn drop_db(config: &Config)-> Result<(),handle_errors::Error>{
+
+//     let db_url = format!("postgres://{}:{}@{}:{}/{}",
+//         config.db_user,
+//         config.db_password,
+//         config.db_host,
+//         config.db_port,
+//         config.db_name
+//     );
+
+//     //println!("--- DB URL: {:?}",db_url.clone());
+
+//     let s = Command::new("sqlx")
+//         .arg("database")
+//         .arg("drop")
+//         .arg("--force")
+//         .arg("--database-url")
+//         .arg(db_url).arg("-y")
+//         .output()
+//         .expect("sqlx command failed to start");
+
+//     io::stdout().write_all(&s.stderr).unwrap();
+
+//     Ok(())
+
+
+//  }
 
 
 pub async fn  register_and_login(user: &PostUserRequest) -> Token {

@@ -2,14 +2,10 @@ use std::process::Command;
 use std::io::{self, Write};
 use futures_util::future::FutureExt; 
 
-use factura::{config, handle_errors, oneshot, setup_db_connection};
+use factura::{config, handle_errors, oneshot, setup_db_connection,};
 use dtos::user::PostUserRequest; 
 
 
-use handlers::utils::{
-   create_db,
-   drop_db,
-};
 
 use handlers::fournisseur::{
     post_fournisseur,
@@ -32,6 +28,10 @@ use handlers::dossier_fournisseur::{
 use handlers::document::{
     post_document,
     get_document_by_id,
+};
+
+use handlers::fichier::{
+    post_fichier,
 };
 
 use handlers::user::{
@@ -62,7 +62,6 @@ async fn main() -> Result<(), handle_errors::Error> {
 
     // start the server and listen for a sender signal to shut it down
     let handler = oneshot(&config,true, conn).await;
-
 
     print!("Running register_new_user...");
     let result = std::panic::AssertUnwindSafe(register_new_user()).catch_unwind().await;
@@ -239,6 +238,15 @@ async fn main() -> Result<(), handle_errors::Error> {
 
     print!("Running delete_document...");
     match std::panic::AssertUnwindSafe(delete_document()).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
+    print!("Running post_fichier...");
+    match std::panic::AssertUnwindSafe(post_fichier()).catch_unwind().await {
         Ok(_) => println!("✓"),
         Err(_) => {
             let _ = handler.sender.send(1);

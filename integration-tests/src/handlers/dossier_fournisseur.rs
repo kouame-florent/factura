@@ -19,7 +19,7 @@ use crate::dtos::fournisseur::{
     FournisseurId, PostFournisseurAnswer, PostFournisseurRequest,
 };
 
-use crate::handlers::utils::{create_db, get_email, register_and_login};
+use crate::handlers::utils::{ get_email, register_and_login};
 
 pub async fn post_dossier_fournisseur() {
 

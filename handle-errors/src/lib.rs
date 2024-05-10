@@ -21,6 +21,7 @@ pub enum Error {
     MultipartParsingError,
     UnsupportedFileType,
     InvalidDocumentId,
+    FileNotFound,
 }
 
 impl std::fmt::Display for Error {
@@ -38,6 +39,7 @@ impl std::fmt::Display for Error {
             Error::UnsupportedFileType => write!(f, "This file type is not supported"),
             Error::InvalidDocumentId => write!(f, "Invalid document id"),
             Error::MultipartParsingError =>  write!(f, "Multipart parsing error"),
+            Error::FileNotFound =>  write!(f, "File not found error"),
         }
     }
 }

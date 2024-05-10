@@ -11,6 +11,7 @@ use warp::Filter;
 use crate::store::authentication::AuthStore;
 use crate::types::account::Account;
 use crate::types::account::AccountId;
+use crate::types::account::NewAccount;
 use crate::types::account::Session;
 
 
@@ -18,13 +19,12 @@ use crate::types::account::Session;
 #[instrument]
 pub async fn register( 
     store: AuthStore,
-    account: Account,
+    account: NewAccount,
 ) -> Result<impl warp::Reply, warp::Rejection>{
 
     let hashed_password = hash_password(account.password.as_bytes());
 
-    let account = Account {
-        id: account.id,
+    let account = NewAccount {
         email: account.email,
         password: hashed_password, 
         roles: account.roles,

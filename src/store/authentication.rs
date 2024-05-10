@@ -4,6 +4,7 @@ use tracing::instrument;
 
 use handle_errors::Error;
 
+use crate::types::account::{NewAccount, Roles};
 use crate::types::{
     account::Account,
     account::AccountId,
@@ -28,15 +29,15 @@ impl AuthStore{
 
     pub async fn add_account(
         &self, 
-        account: Account
+        new_account: NewAccount
     ) -> Result<bool, Error>{
 
         match sqlx::query("INSERT INTO account (id, email, password, roles)
             VALUES ($1, $2, $3, $4)")
-            .bind(account.id.expect("Account id not set").0)
-            .bind(account.email)
-            .bind(account.password)
-            .bind(account.roles)
+            .bind(uuid::Uuid::new_v4().to_string())
+            .bind(new_account.email)
+            .bind(new_account.password)
+            .bind(new_account.roles)
             .execute(&self.connection)
             .await
             {
@@ -99,6 +100,7 @@ impl AuthStore{
                 email: row.get("email"),
                 password: row.get("password"),
                 roles: row.get("roles")
+
             })
             .fetch_one(&self.connection)
             .await
@@ -143,17 +145,23 @@ impl AuthStore{
         account_roles: Option<String>,
         target_role: String
     ) -> bool{
+
         let roles: Vec<&str> = match account_roles {
             Some(ref r) => r.split(",").collect(),
-            None => vec![] //"".split("X").collect()
+            None => vec![] 
         };
-   
-        for role in roles{
-            if role == target_role{
-                return true;
+
+       // println!("--- Current roles: {:?}", roles.clone());
+        if roles.contains(&Roles::ADMIN.as_str()){
+            return true;
+        }else{
+            for role in roles{
+                if role == target_role{
+                    return true;
+                }
             }
         }
-
+   
         false
     }
 
